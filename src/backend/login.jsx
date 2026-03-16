@@ -48,14 +48,15 @@ export default function Login() {
       if (data.success) {
         setSuccess(data.message);
 
-         // Save token
-  localStorage.setItem("authToken", data.data.token);
+        // Save token
+        localStorage.setItem("authToken", data.data.token);
 
-  // Save user info
-  localStorage.setItem("userInfo", JSON.stringify(data.data.user));
+        // Save user info
+        localStorage.setItem("userInfo", JSON.stringify(data.data.user));
 
-  // Save role
-  localStorage.setItem("userRole", data.data.user.role);
+        // Save role
+        localStorage.setItem("userRole", data.data.user.role);
+        localStorage.setItem("userId", data.data.user.id);
 
 
         setTimeout(() => {

@@ -8,12 +8,22 @@ import DashNav from "./DasNav";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+
+
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Visa = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+
+
+    const userRole = localStorage.getItem("userRole"); // "admin" or "user"
+    const userId = Number(localStorage.getItem("userId"));
+
+    console.log("Logged-in User Role:", userRole);
+    console.log("Logged-in User ID:", userId);
+    console.log("All Reviews Data:", reviews);
 
     // Text / number fields
     const [name, setName] = useState("");
@@ -79,58 +89,71 @@ const Visa = () => {
     };
 
     // Inside your Visa component, after fetching reviews:
- const exportAllToExcel = () => {
-    if (reviews.length === 0) {
-        toast.error("No data available to export");
-        return;
-    }
+    const exportAllToExcel = () => {
+        if (reviews.length === 0) {
+            toast.error("No data available to export");
+            return;
+        }
 
-    // Flatten reviews for Excel
-    const data = reviews.map((review) => {
-        const flatReview = { ...review };
+        // Flatten reviews for Excel
+        const data = reviews.map((review) => {
+            const flatReview = { ...review };
 
-        // Flatten nested objects
-        if (review.country) flatReview.country = review.country.name;
-        if (review.team) flatReview.team = review.team.name;
+            // Flatten nested objects
+            if (review.country) flatReview.country = review.country.name;
+            if (review.team) flatReview.team = review.team.name;
 
-        // Remove any unnecessary nested objects if you want
-        // You can keep other fields like image URLs as-is
+            // Remove any unnecessary nested objects if you want
+            // You can keep other fields like image URLs as-is
 
-        return flatReview;
-    });
+            return flatReview;
+        });
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Visa Data");
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Visa Data");
 
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, "Visa_Data.xlsx");
-};
+        const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+        const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+        saveAs(blob, "Visa_Data.xlsx");
+    };
 
 
-  const filteredReviews = reviews.filter((review) => {
-    const query = searchQuery.toLowerCase();
 
-    const matchesSearch =
-        review.name?.toLowerCase().includes(query) ||
-        review.phone?.toLowerCase().includes(query) ||
-        review.team?.name?.toLowerCase().includes(query) ||
-        review.passport?.toLowerCase().includes(query); // ✅ include passport here
 
-    const reviewDate = review.date ? new Date(review.date) : null;
 
-    const matchesMonth =
-        !selectedMonth ||
-        (reviewDate &&
-            reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
+    const filteredReviews = reviews
+        // Role-based filter
+        .filter((review) => {
+            if (userRole === "admin") return true; // admin sees all
 
-    const matchesYear =
-        !selectedYear ||
-        (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
+            // normal user sees only their own reviews
+            return review.user?.id === userId || review.user_id === userId;
+        })
+        // Search + Month + Year filter
+        .filter((review) => {
+            const query = searchQuery.toLowerCase();
 
-    return matchesSearch && matchesMonth && matchesYear;
-});
+            const matchesSearch =
+                review.name?.toLowerCase().includes(query) ||
+                review.phone?.toLowerCase().includes(query) ||
+                review.team?.name?.toLowerCase().includes(query) ||
+                review.passport?.toLowerCase().includes(query);
+
+            const reviewDate = review.date ? new Date(review.date) : null;
+
+            const matchesMonth =
+                !selectedMonth ||
+                (reviewDate &&
+                    reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
+
+            const matchesYear =
+                !selectedYear ||
+                (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
+
+            return matchesSearch && matchesMonth && matchesYear;
+        });
+
 
 
     // Fetch Countries
@@ -418,7 +441,7 @@ const Visa = () => {
                                     ))}
                                 </select>
 
-                                 {/* Excel Download Button */}
+                                {/* Excel Download Button */}
                                 <button
                                     className="btn btn-success me-2 d-flex align-items-center"
                                     onClick={exportAllToExcel}
@@ -434,7 +457,7 @@ const Visa = () => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
 
-                               
+
 
                                 <button
                                     className="btn btn-success"

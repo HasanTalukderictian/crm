@@ -47,7 +47,7 @@ const Dashboard = () => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`, // authToken ব্যবহার
                 },
-            });
+            }); 
 
             if (response.ok) {
                 const data = await response.json();
