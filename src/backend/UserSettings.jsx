@@ -24,22 +24,27 @@ const UserSettings = () => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // fetch users
+  
+
     const fetchUsers = async () => {
         try {
+
+            const token = localStorage.getItem("adminToken");
+
             const response = await fetch(`${API_BASE}/users`, {
                 headers: {
                     "Accept": "application/json",
-                    "Authorization": "Bearer " + JSON.parse(localStorage.getItem("adminUser"))?.token
-                },
+                    "Authorization": "Bearer " + token
+                }
             });
+
             const data = await response.json();
-            if (response.ok) {
-                setUsers(data.users || []);
-                setFilteredUsers(data.users || []);
-            } else {
-                console.error("Failed to fetch users", data);
+
+            if (response.ok && data.users) {
+                setUsers(data.users);
+                setFilteredUsers(data.users);
             }
+
         } catch (error) {
             console.error("Fetch error:", error);
         }
@@ -49,47 +54,53 @@ const UserSettings = () => {
         fetchUsers();
     }, []);
 
-    // toggle active/inactive
+    
+
+
     const toggleStatus = async (userId, currentStatus) => {
         try {
+
+            const token = localStorage.getItem("adminToken");
+
             const response = await fetch(`${API_BASE}/users/${userId}/toggle-status`, {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + JSON.parse(localStorage.getItem("adminUser"))?.token
+                    "Authorization": "Bearer " + token
                 },
                 body: JSON.stringify({ active: !currentStatus })
             });
 
-            const data = await response.json();
             if (response.ok) {
-                const updatedUsers = users.map(user => user.id === userId ? { ...user, active: !currentStatus } : user);
+
+                const updatedUsers = users.map(user =>
+                    user.id === userId ? { ...user, active: !currentStatus } : user
+                );
+
                 setUsers(updatedUsers);
                 applyFilter(filterStatus, updatedUsers);
-            } else {
-                console.error("Failed to toggle status", data);
-                alert(data.message || "Failed to update status");
+
             }
+
         } catch (error) {
-            console.error("Fetch error:", error);
-            alert("Something went wrong while updating status");
+            console.error(error);
         }
     };
 
-    // submit add user form
     const handleAddUser = async (e) => {
         e.preventDefault();
-        setError("");
-        setSuccess("");
+
+        const token = localStorage.getItem("adminToken");
 
         try {
+
             const response = await fetch(`${API_BASE}/create-user`, {
                 method: "POST",
                 headers: {
                     "Accept": "application/json",
                     "Content-Type": "application/json",
-                    "Authorization": "Bearer " + JSON.parse(localStorage.getItem("adminUser"))?.token
+                    "Authorization": "Bearer " + token
                 },
                 body: JSON.stringify({ name, email, password, role })
             });
@@ -97,22 +108,29 @@ const UserSettings = () => {
             const data = await response.json();
 
             if (response.ok) {
-                setSuccess("User created successfully!");
+
                 const updatedUsers = [...users, data.user];
+
                 setUsers(updatedUsers);
                 applyFilter(filterStatus, updatedUsers);
+
                 setShowModal(false);
+
                 setName("");
                 setEmail("");
                 setPassword("");
                 setRole("admin");
-                setCurrentPage(Math.ceil(updatedUsers.length / usersPerPage)); // go to last page
+
             } else {
+
                 setError(data.message || "Failed to create user");
+
             }
+
         } catch (err) {
-            console.error(err);
+
             setError("Something went wrong");
+
         }
     };
 
@@ -179,7 +197,11 @@ const UserSettings = () => {
                                     currentUsers.map((user) => (
                                         <tr key={user.id}>
                                             <td>{user.name}</td>
-                                            <td>{user.role?.name || "-"}</td>
+                                            <td>
+                                                <span className={`badge ${user.role === "admin" ? "bg-danger" : "bg-primary"}`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
                                             <td>{user.email}</td>
                                             <td>
                                                 <button

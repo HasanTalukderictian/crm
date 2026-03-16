@@ -14,10 +14,11 @@ const Sidebar = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("authToken");
+    localStorage.removeItem("userInfo");
+    localStorage.removeItem("userRole");
     navigate("/admin");
   };
 
-  // Fetch Header from API
   const fetchHeader = async () => {
     try {
       const res = await axios.get(`${API_BASE}/get-header`);
@@ -32,6 +33,19 @@ const Sidebar = () => {
   useEffect(() => {
     fetchHeader();
   }, []);
+
+  // Get user role from localStorage
+  const userRole = localStorage.getItem("userRole"); // "admin" or "user"
+
+  // Sidebar links
+  const links = [
+    { to: "/admin-home", icon: "bi-speedometer2", label: "Dashboard", roles: ["admin", "user"] },
+    { to: "/admin-visa", icon: "bi-speedometer2", label: "Visa Management", roles: ["admin", "user"] },
+    { to: "/admin-users", icon: "bi-people", label: "User Settings", roles: ["admin"] },
+    { to: "/admin-team", icon: "bi-person", label: "Team", roles: ["admin", "user"] },
+    { to: "/admin-depart", icon: "bi-diagram-3", label: "Department", roles: ["admin", "user"] },
+      { to: "/admin-settings", icon: "bi-globe", label: "Country Settings", roles: ["admin", "user"] },
+  ];
 
   return (
     <>
@@ -61,43 +75,34 @@ const Sidebar = () => {
               }}
             />
           )}
-          <h2 style={{ fontSize: "20px", margin: 0 , color : 'white'}}>{header?.Companyname}</h2>
+          <h4 style={{ fontSize: "20px", margin: 0, color: "white" }}>
+            {header?.company_name}
+          </h4>
         </div>
 
         <ul className="nav flex-column">
-          {[
-            { to: "/admin-home", icon: "bi-speedometer2", label: "Dashboard" },
-            { to: "/admin-orders", icon: "bi-receipt", label: "Orders" },
-            { to: "/admin-category", icon: "bi-tags", label: "Category" },
-            { to: "/admin-products", icon: "bi-box-seam", label: "Products" },
-            { to: "/admin-store", icon: "bi-pencil-square", label: "Store Settings" },
-            { to: "/admin-couirer", icon: "bi-truck", label: "Courier Settings" },
-            { to: "/admin-users", icon: "bi-people", label: "User Settings" },
-            { to: "/admin-testo", icon: "bi-star-fill", label: "Testimonial" },
-            { to: "/admin-banner", icon: "bi-megaphone-fill", label: "Banner" },
-            { to: "/admin-contact", icon: "bi-person-lines-fill", label: "Contact" },
-            { to: "/admin-team", icon: "bi-person", label: "Team" },
-            { to: "/admin-header", icon: "bi-sliders", label: "Header" },
-          ].map((item, index) => (
-            <li key={index} className="nav-item">
-              <NavLink
-                to={item.to}
-                onClick={() => setIsSidebarOpen(false)}
-                className={({ isActive }) =>
-                  `nav-link ${isActive ? "active-sidebar" : ""}`
-                }
-              >
-                <i className={`bi ${item.icon}`}></i>
-                {item.label}
-              </NavLink>
-              
-            </li>
-          ))}
-            <button onClick={handleLogout} className="nav-link logout-btn">
-              <i className="bi bi-box-arrow-right"></i>
-              Logout
-            </button>
-          
+          {links
+            .filter((link) => link.roles.includes(userRole)) // role-based filter
+            .map((item, index) => (
+              <li key={index} className="nav-item">
+                <NavLink
+                  to={item.to}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `nav-link ${isActive ? "active-sidebar" : ""}`
+                  }
+                >
+                  <i className={`bi ${item.icon}`}></i>
+                  {item.label}
+                </NavLink>
+              </li>
+            ))}
+
+          {/* Logout */}
+          <button onClick={handleLogout} className="nav-link logout-btn">
+            <i className="bi bi-box-arrow-right"></i>
+            Logout
+          </button>
         </ul>
       </div>
     </>

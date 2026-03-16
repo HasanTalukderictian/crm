@@ -10,7 +10,6 @@ import '../../src/assets/css/dashboard.scss';
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const steps = [
@@ -23,7 +22,6 @@ const steps = [
 ];
 
 const Dashboard = () => {
-
     const navigate = useNavigate();
 
     const [dashboardData, setDashboardData] = useState({
@@ -37,11 +35,17 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
         try {
+            const token = localStorage.getItem("authToken");
+            if (!token) {
+                navigate("/admin"); // যদি token না থাকে
+                return;
+            }
+
             const response = await fetch(`${API_BASE}/dashboard-data`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+                    Authorization: `Bearer ${token}`, // authToken ব্যবহার
                 },
             });
 
@@ -60,7 +64,8 @@ const Dashboard = () => {
             } else if (response.status === 401) {
                 console.error("Unauthorized access. Redirecting to login...");
                 localStorage.removeItem("authToken");
-                localStorage.removeItem("isAdminLoggedIn");
+                localStorage.removeItem("userInfo");
+                localStorage.removeItem("userRole");
                 navigate("/admin");
             } else {
                 console.error("Failed to fetch dashboard data.");
@@ -85,10 +90,10 @@ const Dashboard = () => {
                 dashboardData.review
             ],
             backgroundColor: [
-                "rgba(255, 99, 132, 0.6)",  // Orders
-                "rgba(54, 162, 235, 0.6)",  // Products
-                "rgba(255, 206, 86, 0.6)",  // Users
-                "rgba(155, 89, 182, 0.6)"   // Reviews (purple)
+                "rgba(255, 99, 132, 0.6)",
+                "rgba(54, 162, 235, 0.6)",
+                "rgba(255, 206, 86, 0.6)",
+                "rgba(155, 89, 182, 0.6)"
             ],
             borderColor: [
                 "rgba(255, 99, 132, 1)",
@@ -158,6 +163,7 @@ const Dashboard = () => {
             url: "/admin-testo"
         }
     ];
+
     return (
         <div className="container mt-1 border-2 bg-gradient-secondary">
             <Tour
@@ -170,8 +176,6 @@ const Dashboard = () => {
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="dashboard-title">Dashboard</h2>
             </div>
-
-
 
             <div className="row g-4">
                 {cards.map((card, index) => (
@@ -197,8 +201,6 @@ const Dashboard = () => {
                     </div>
                 ))}
             </div>
-
-
 
             <div className="row g-4 mt-4">
                 <div className="col-lg-6">

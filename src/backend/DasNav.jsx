@@ -1,76 +1,55 @@
 import { useEffect, useState } from 'react';
 import '../assets/css/nav.scss'
 
-
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 export const API_STORE = import.meta.env.VITE_API_STORAGE_URL;
 
 const DashNav = () => {
     const [showModal, setShowModal] = useState(false);
-    const [companyName, setCompanyName] = useState('Gazi Builders'); // fallback name
-    const [logo, setLogo] = useState('https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png'); // fallback logo
+    const [companyName, setCompanyName] = useState('Gazi Builders');
+    const [logo, setLogo] = useState('https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
     const [yourName, setYourName] = useState('');
     const [image, setImage] = useState(null);
-    const [userId, setUserId] = useState(null);
 
     const [formCompanyName, setFormCompanyName] = useState('');
-    const [formYourName, setFormYourName] = useState('');
     const [formImage, setFormImage] = useState(null);
 
-    // ================================
-    // Fetch company info from API
-    // ================================
+    const userRole = localStorage.getItem("userRole");
+
+    // Fetch company info
     const fetchCompanyInfo = async () => {
         try {
             const response = await fetch(`${API_BASE}/get-header`);
             const data = await response.json();
+
             if (response.ok && data.status && data.data.length > 0) {
                 const header = data.data[0];
-                setCompanyName(header.Companyname || 'Gazi Builders');
+
+                setCompanyName(header.company_name || 'Gazi Builders');
+
+                // API থেকে full URL already আছে, তাই সরাসরি setLogo
                 setLogo(header.image || 'https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
+
+                setFormCompanyName(header.company_name);
             }
         } catch (err) {
             console.error("Failed to fetch company info:", err);
         }
     };
-
-    // ================================
-    // Fetch user info (existing)
-    // ================================
-    const fetchUserInfo = async () => {
-        try {
-            const response = await fetch(`${API_BASE}/get-userInfo`, {
-                headers: { 'Accept': 'application/json' },
-            });
-            const data = await response.json();
-
-            if (response.ok && data.data && data.data.length > 0) {
-                const user = data.data[0];
-                setCompanyName(prev => prev); // keep API company name unchanged
-                setYourName(user.your_name || '');
-                setImage(user.image ? `${API_STORE}/storage/${user.image}` : null);
-                setUserId(user.id);
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-        }
-    };
-
     useEffect(() => {
         fetchCompanyInfo();
-        fetchUserInfo();
     }, []);
 
     const handleOpenModal = () => {
+        // যদি role admin হয়, modal না খোলে
+        if (userRole === 'admin') return;
+
         setFormCompanyName(companyName);
-        setFormYourName(yourName);
         setFormImage(null);
         setShowModal(true);
     };
-
     const handleCloseModal = () => setShowModal(false);
 
-    // Image optimization function
     const optimizeImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.7) => {
         return new Promise((resolve) => {
             const reader = new FileReader();
@@ -110,8 +89,7 @@ const DashNav = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
-        formData.append('CompanyName', formCompanyName);
-        formData.append('YourName', formYourName);
+        formData.append('company_name', formCompanyName);
 
         if (formImage instanceof File) {
             const optimizedBlob = await optimizeImage(formImage);
@@ -120,27 +98,25 @@ const DashNav = () => {
         }
 
         try {
-            const response = await fetch(`${API_BASE}/edit-userInfo/${userId}`, {
+            const response = await fetch(`${API_BASE}/add-header`, {
                 method: 'POST',
                 body: formData,
             });
 
             const data = await response.json();
 
-            if (response.ok) {
-                alert('User info updated successfully!');
+            if (response.ok && data.status) {
+                alert(data.message || 'Company info saved!');
                 setShowModal(false);
-                fetchUserInfo();
-                setFormCompanyName('');
-                setFormYourName('');
+                fetchCompanyInfo();
                 setFormImage(null);
             } else {
                 console.error('Error response:', data);
-                alert('Update failed: ' + (data.message || 'Check console.'));
+                alert('Failed to save: ' + (data.message || 'Check console'));
             }
         } catch (error) {
             console.error('Fetch error:', error);
-            alert('An error occurred while updating the form.');
+            alert('An error occurred while saving the form.');
         }
     };
 
@@ -149,33 +125,30 @@ const DashNav = () => {
             <div className="d-flex container justify-content-center">
                 <nav className="navbar bg-white shadow-sm py-2 px-4 d-flex justify-content-between align-items-center" style={{ maxWidth: "1500px", width: "100%" }}>
                     <div className="d-flex align-items-center">
-                        <img
-                            src={logo}
-                            alt="Company Logo"
-                            className="me-2"
-                            style={{ height: "40px" }}
-                        />
+                        <img src={logo} alt="Company Logo" className="me-2" style={{ height: "40px" }} />
                         <h4 className="fw-bold text-primary">{companyName}</h4>
-                        <span className="text-muted small ms-1">Make your Shopping more Happiness</span>
+
                     </div>
 
                     <div className="d-flex align-items-center">
-                        <div className="profile-image-wrapper me-2">
-                            <img
-                                src={image ? `${image}?${new Date().getTime()}` : "https://i.ibb.co.com/rK7RzDJk/MY-pic-02.jpg"}
-                                alt="User"
-                                className="profile-image"
-                            />
-                        </div>
-
                         <div className="mt-1 mb-1">
                             <span className="d-block text-muted">Hello,</span>
-                            <span className="fw-bold" style={{ cursor: "pointer", color: "#0d6efd" }} onClick={handleOpenModal}>
+                            <span
+                                className="fw-bold"
+                                style={{ cursor: userRole === 'admin' ? 'pointer' : 'default', color: "#0d6efd" }}
+                                onClick={() => {
+                                    if (userRole === 'admin') {
+                                        setFormCompanyName(companyName);
+                                        setFormImage(null);
+                                        setShowModal(true);
+                                    }
+                                }}
+                            >
                                 {yourName || 'Admin'}
                             </span>
                             <p className="small text-muted m-0 d-flex align-items-center">
                                 Welcome to our panel
-                                <span className="ms-2">😊</span>
+                                {/* <span className="ms-2">😊</span> */}
                             </p>
                         </div>
                     </div>
@@ -203,33 +176,19 @@ const DashNav = () => {
                                             required
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Your Name</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            value={formYourName}
-                                            onChange={(e) => setFormYourName(e.target.value)}
-                                            required
-                                        />
-                                    </div>
 
                                     <div className="mb-3">
                                         <label className="form-label">Image</label>
                                         <input
                                             type="file"
                                             className="form-control"
-                                            onChange={(e) => {
-                                                if (e.target.files && e.target.files[0]) {
-                                                    setFormImage(e.target.files[0]);
-                                                }
-                                            }}
+                                            onChange={(e) => e.target.files && setFormImage(e.target.files[0])}
                                             accept="image/*"
                                         />
                                         {formImage && (
                                             <div className="mt-2 position-relative d-inline-block">
                                                 <img
-                                                    src={typeof formImage === "string" ? formImage : URL.createObjectURL(formImage)}
+                                                    src={URL.createObjectURL(formImage)}
                                                     alt="Preview"
                                                     style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px" }}
                                                 />

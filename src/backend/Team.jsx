@@ -6,7 +6,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import DashNav from "./DasNav";
 
-
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const Team = () => {
@@ -15,12 +14,15 @@ const Team = () => {
   const [showModal, setShowModal] = useState(false);
 
   const [name, setName] = useState("");
-  const [designation, setDesignation] = useState("");
+  const [departmentId, setDepartmentId] = useState(""); // replaced designation
+  const [departments, setDepartments] = useState([]); // API fetched departments
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  // Fetch data
+  const userRole = localStorage.getItem("userRole"); // "admin" or "user"
+
+  // Fetch team data
   const fetchData = () => {
     axios
       .get(`${API_BASE}/get-team`)
@@ -30,8 +32,19 @@ const Team = () => {
       .finally(() => setLoading(false));
   };
 
+  // Fetch departments for dropdown
+  const fetchDepartments = () => {
+    axios
+      .get(`${API_BASE}/departments`)
+      .then((res) => {
+        if (res.data.status) setDepartments(res.data.data);
+      })
+      .catch((err) => console.error(err));
+  };
+
   useEffect(() => {
     fetchData();
+    fetchDepartments();
   }, []);
 
   // Image Handling
@@ -44,35 +57,33 @@ const Team = () => {
   const removePreview = () => {
     setImage(null);
     setPreview(null);
-
-    // file input reset করার জন্য
     const fileInput = document.getElementById("bannerImageInput");
-    if (fileInput) {
-      fileInput.value = "";
-    }
+    if (fileInput) fileInput.value = "";
   };
 
   const resetForm = () => {
     setName("");
-    setDesignation("");
+    setDepartmentId("");
     setImage(null);
     setPreview(null);
   };
 
-
-  // Submit Banner
+  // Submit Team member
   const submitBanner = async () => {
+    if (!departmentId) {
+      toast.error("Please select a department");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("designation", designation);
+    formData.append("department_id", departmentId); // replaced
     if (image) formData.append("image", image);
 
     try {
-      const res = await axios.post(
-        `${API_BASE}/add-team`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const res = await axios.post(`${API_BASE}/add-team`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       if (res.data.status) {
         fetchData();
@@ -82,25 +93,23 @@ const Team = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to add banner.");
+      toast.error("Failed to add team member.");
     }
   };
 
   // Delete
   const deleteBanner = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this banner?")) return;
+    if (!window.confirm("Are you sure you want to delete this team member?")) return;
 
     try {
-      const res = await axios.delete(
-        `${API_BASE}/del-team/${id}`
-      );
+      const res = await axios.delete(`${API_BASE}/del-team/${id}`);
       if (res.data.status) {
         fetchData();
         toast.success("Team deleted successfully!");
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to delete banner.");
+      toast.error("Failed to delete team member.");
     }
   };
 
@@ -113,12 +122,12 @@ const Team = () => {
           <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h3>Team List</h3>
-              <button
-                className="btn btn-success"
-                onClick={() => setShowModal(true)}
-              >
-                + Add
-              </button>
+              {/* Show +Add button only for admin */}
+              {userRole === "admin" && (
+                <button className="btn btn-success" onClick={() => setShowModal(true)}>
+                  + Add
+                </button>
+              )}
             </div>
 
             {loading ? (
@@ -129,9 +138,9 @@ const Team = () => {
                   <thead className="table-dark">
                     <tr>
                       <th>Name</th>
-                      <th>Desgination</th>
+                      <th>Department</th>
                       <th>Image</th>
-                      <th>Action</th>
+                      {userRole === "admin" && <th>Action</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -139,7 +148,7 @@ const Team = () => {
                       data.map((item) => (
                         <tr key={item.id}>
                           <td>{item.name}</td>
-                          <td>{item.designation}</td>
+                          <td>{item.department_name}</td>
                           <td>
                             {item.image && (
                               <img
@@ -151,19 +160,21 @@ const Team = () => {
                               />
                             )}
                           </td>
-                          <td>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => deleteBanner(item.id)}
-                            >
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </td>
+                          {userRole === "admin" && (
+                            <td>
+                              <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => deleteBanner(item.id)}
+                              >
+                                <i className="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="4" className="text-center">
+                        <td colSpan={userRole === "admin" ? 4 : 3} className="text-center">
                           No Data Found
                         </td>
                       </tr>
@@ -180,25 +191,15 @@ const Team = () => {
 
       {/* Modal */}
       {showModal && (
-        <div
-          className="modal fade show"
-          style={{ display: "block", background: "rgba(0,0,0,0.5)" }}
-        >
+        <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add Banner</h5>
-                <button
-                  className="btn-close"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                ></button>
+                <h5 className="modal-title">Add Team Member</h5>
+                <button className="btn-close" onClick={() => { setShowModal(false); resetForm(); }}></button>
               </div>
 
               <div className="modal-body">
-
                 {/* Name */}
                 <div className="mb-3">
                   <label className="form-label">Name</label>
@@ -211,27 +212,27 @@ const Team = () => {
                   />
                 </div>
 
-                {/* Designation */}
+                {/* Department Dropdown */}
                 <div className="mb-3">
-                  <label className="form-label">Designation</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    placeholder="Enter designation"
-                  />
+                  <label className="form-label">Department</label>
+                  <select
+                    className="form-select"
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                  >
+                    <option value="">Select Department</option>
+                    {departments.map((dep) => (
+                      <option key={dep.id} value={dep.id}>
+                        {dep.department}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Image */}
                 <div className="mb-3">
                   <label className="form-label">Image</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    id="bannerImageInput"
-                    onChange={handleImageChange}
-                  />
+                  <input type="file" className="form-control" id="bannerImageInput" onChange={handleImageChange} />
                 </div>
 
                 {/* Preview */}
@@ -241,14 +242,9 @@ const Team = () => {
                       src={preview}
                       width="120"
                       height="120"
-                      style={{
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        border: "1px solid #ddd",
-                      }}
+                      style={{ objectFit: "cover", borderRadius: "8px", border: "1px solid #ddd" }}
                       alt="Preview"
                     />
-
                     <button
                       type="button"
                       onClick={removePreview}
@@ -270,19 +266,10 @@ const Team = () => {
                     </button>
                   </div>
                 )}
-
               </div>
 
-
-
               <div className="modal-footer">
-                <button
-                  className="btn btn-danger"
-                  onClick={() => {
-                    setShowModal(false);
-                    resetForm();
-                  }}
-                >
+                <button className="btn btn-danger" onClick={() => { setShowModal(false); resetForm(); }}>
                   Close
                 </button>
                 <button className="btn btn-success" onClick={submitBanner}>

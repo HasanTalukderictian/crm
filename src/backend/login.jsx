@@ -8,7 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [headerImage, setHeaderImage] = useState(""); // ✅ For API image
+  const [headerImage, setHeaderImage] = useState("");
 
   const navigate = useNavigate();
 
@@ -21,7 +21,7 @@ export default function Login() {
         const res = await fetch(`${API_BASE}/get-header`);
         const data = await res.json();
         if (data.status && data.data.length > 0) {
-          setHeaderImage(data.data[0].image); // ✅ Set image from API
+          setHeaderImage(data.data[0].image);
         }
       } catch (err) {
         console.error("Header API Error:", err);
@@ -45,9 +45,18 @@ export default function Login() {
 
       const data = await response.json();
 
-      if (data.status) {
+      if (data.success) {
         setSuccess(data.message);
-        localStorage.setItem("adminUser", JSON.stringify(data.data));
+
+         // Save token
+  localStorage.setItem("authToken", data.data.token);
+
+  // Save user info
+  localStorage.setItem("userInfo", JSON.stringify(data.data.user));
+
+  // Save role
+  localStorage.setItem("userRole", data.data.user.role);
+
 
         setTimeout(() => {
           navigate("/admin-home");
@@ -66,7 +75,7 @@ export default function Login() {
       <div className="card shadow p-4" style={{ width: "420px", borderRadius: "18px" }}>
         <h3 className="text-center mb-4 fw-bold text-primary">Welcome Back</h3>
 
-        {/* ✅ Header image from API */}
+        {/* Header image from API */}
         {headerImage && (
           <div className="text-center mb-3">
             <img

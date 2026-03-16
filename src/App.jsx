@@ -1,6 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Home from './components/frontend/Home';
 import About from './components/frontend/About';
 import './assets/css/style.scss';
 import Services from './components/frontend/Services';
@@ -26,6 +25,9 @@ import Banner from './backend/Banner.jsx';
 import ContactUs from './backend/ContactUs.jsx';
 import Team from './backend/Team.jsx';
 import Headersetting from './backend/Headersetting.jsx';
+import Department from './backend/Department.jsx';
+import Settings from './backend/Settings.jsx';
+import Visa from './backend/Visa.jsx';
 
 
 
@@ -35,7 +37,8 @@ function App() {
     <CartProvider>
       <BrowserRouter>
         <Routes>
-          <Route path='/' element={<Home />} />
+          <Route path='/' element={<Login />} />
+
           <Route path='/about' element={<About />} />
           <Route path='/service' element={<Services />} />
           <Route path='/projects' element={<Projects />} />
@@ -58,6 +61,10 @@ function App() {
           <Route path="/admin-contact" element={<ContactUs />} />
           <Route path="/admin-team" element={<Team />} />
           <Route path="/admin-header" element={<Headersetting />} />
+           <Route path="/admin-depart" element={<Department />} />
+          <Route path="/admin-settings" element={<Settings />} />
+              <Route path="/admin-visa" element={<Visa />} />
+
 
           {/* Catch-all route */}
           <Route path="*" element={<Nullpage />} />
