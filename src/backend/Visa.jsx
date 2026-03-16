@@ -109,25 +109,28 @@ const Visa = () => {
 };
 
 
-    const filteredReviews = reviews.filter((review) => {
-        const query = searchQuery.toLowerCase();
-        const matchesSearch =
-            review.name?.toLowerCase().includes(query) ||
-            review.phone?.toLowerCase().includes(query) ||
-            review.team?.name?.toLowerCase().includes(query);
+  const filteredReviews = reviews.filter((review) => {
+    const query = searchQuery.toLowerCase();
 
-        const reviewDate = review.date ? new Date(review.date) : null;
-        const matchesMonth =
-            !selectedMonth ||
-            (reviewDate &&
-                reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
+    const matchesSearch =
+        review.name?.toLowerCase().includes(query) ||
+        review.phone?.toLowerCase().includes(query) ||
+        review.team?.name?.toLowerCase().includes(query) ||
+        review.passport?.toLowerCase().includes(query); // ✅ include passport here
 
-        const matchesYear =
-            !selectedYear ||
-            (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
+    const reviewDate = review.date ? new Date(review.date) : null;
 
-        return matchesSearch && matchesMonth && matchesYear;
-    });
+    const matchesMonth =
+        !selectedMonth ||
+        (reviewDate &&
+            reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
+
+    const matchesYear =
+        !selectedYear ||
+        (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
+
+    return matchesSearch && matchesMonth && matchesYear;
+});
 
 
     // Fetch Countries
