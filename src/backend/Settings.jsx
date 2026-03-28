@@ -18,36 +18,88 @@ const Settings = () => {
 
    const userRole = localStorage.getItem("userRole");
     // Fetch countries
-    const fetchCountries = () => {
-        axios
-            .get(`${API_BASE}/all-country`) // backend endpoint should return countries
-            .then((res) => {
-                if (res.data.success) setCountries(res.data.data);
-            })
-            .catch(() => toast.error("Failed to fetch countries"));
-    };
+    const fetchCountries = async () => {
+    try {
+        const res = await axios.get(`${API_BASE}/all-country`);
+
+        if (res.data.success) {
+            setCountries(res.data.data);
+        }
+    } catch (err) {
+            console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
+        }
+};
 
     useEffect(() => {
         fetchCountries();
     }, []);
 
     // Add country
-    const handleCountrySubmit = (e) => {
-        e.preventDefault();
-        if (!countryName.trim()) {
-            toast.error("Country cannot be empty");
-            return;
-        }
+   const handleCountrySubmit = async (e) => {
+    e.preventDefault();
 
-        axios
-            .post(`${API_BASE}/country/store`, { name: countryName }) // backend endpoint to store country
-            .then((res) => {
-                toast.success(res.data.message || "Country created!");
-                setCountryName("");
-                fetchCountries();
-            })
-            .catch(() => toast.error("Failed to create country"));
-    };
+    if (!countryName.trim()) {
+        toast.error("Country cannot be empty");
+        return;
+    }
+
+    try {
+        const res = await axios.post(`${API_BASE}/country/store`, {
+            name: countryName
+        });
+
+        toast.success(res.data.message || "Country created!");
+        setCountryName("");
+        fetchCountries();
+    } catch (err) {
+            console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
+        }
+};
+
 
     // Delete country
     const handleDeleteCountry = (id) => {

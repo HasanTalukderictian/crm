@@ -21,9 +21,30 @@ const Department = () => {
       const res = await axios.get(`${API_BASE}/departments`);
       if (res.data.status) setDepartments(res.data.data);
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to fetch departments");
-    } finally {
+            console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
+        } finally {
       setLoading(false);
     }
   };
@@ -52,9 +73,30 @@ const Department = () => {
         toast.success("Department added successfully!");
       }
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to add department");
-    }
+            console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
+        }
   };
 
   // Delete department

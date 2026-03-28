@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import DashNav from "./DasNav";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import '../assets/css/visa.scss'
 
 
 
@@ -35,6 +36,7 @@ const Visa = () => {
     const [date, setDate] = useState("");
     const [assetValuation, setAssetValuation] = useState("");
     const [salaryAmount, setSalaryAmount] = useState("");
+    const [memberName, setMemberName] = useState("");
 
     const [viewData, setViewData] = useState(null);
     const [viewModal, setViewModal] = useState(false);
@@ -82,6 +84,12 @@ const Visa = () => {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
+
+
+    useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    setDate(today);
+}, []);
 
     // Fetch Team Members
     const [teamMembers, setTeamMembers] = useState([]);
@@ -325,6 +333,7 @@ const Visa = () => {
                 setAssetValuation(data.asset_valuation);
                 setSalaryAmount(data.salary_amount);
                 setApplicantType(data.applicant_type);
+                setMemberName(data.member_name || "");
 
                 if (data.image) {
                     setPreview(data.image);
@@ -436,6 +445,7 @@ const Visa = () => {
         setDate("");
         setAssetValuation("");
         setSalaryAmount("");
+        setMemberName("");
         setFiles({
             image: null,
             bankCertificate: null,
@@ -484,6 +494,7 @@ const Visa = () => {
         formData.append("date", date);
         formData.append("assetValuation", assetValuation || 0);
         formData.append("salaryAmount", salaryAmount || 0);
+        formData.append("member", memberName);
 
         formData.append("applicantType", applicantType);
 
@@ -658,6 +669,7 @@ const Visa = () => {
                                             <th>Customer Phone</th>
                                             <th>Passport</th>
                                             <th>Invoice</th>
+                                            <th>Member</th>
                                             <th>Country</th>
                                             <th>Sales Person</th>
                                             <th>Date</th>
@@ -674,6 +686,7 @@ const Visa = () => {
                                                     <td>{review.phone}</td>
                                                     <td>{review.passport}</td>
                                                     <td>{review.invoice}</td>
+                                                    <td>{review.member}</td>
                                                     <td>{review.country?.name}</td>
                                                     <td>{review.team?.name}</td>
                                                     <td>{review.date}</td>
@@ -876,10 +889,48 @@ const Visa = () => {
                                             type="date"
                                             className="form-control"
                                             value={date}
-                                            onChange={(e) => setDate(e.target.value)}
+                                            readOnly
                                         />
                                     </div>
 
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Member Number</label>
+
+                                        <div className="d-flex align-items-center justify-content-center gap-3">
+
+                                            {/* Minus Button */}
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => {
+                                                    if (memberName > 1) {
+                                                        setMemberName(memberName - 1);
+                                                    }
+                                                }}
+                                            >
+                                                -
+                                            </button>
+
+                                            {/* Number Display */}
+                                            <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
+                                                {memberName || 1}
+                                            </span>
+
+                                            {/* Plus Button */}
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => {
+                                                    setMemberName((prev) => (prev ? prev + 1 : 1));
+                                                }}
+                                            >
+                                                +
+                                            </button>
+
+                                        </div>
+                                    </div>
 
                                     <div className="col-12 mb-3">
                                         <label className="form-label me-3">Applicant Type:</label>
@@ -1258,6 +1309,14 @@ const Visa = () => {
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Asset Valuation</label>
                                         <input className="form-control" value={viewData.asset_valuation} readOnly />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Member Number</label>
+                                        <input
+                                            className="form-control"
+                                            value={viewData.member || "N/A"}
+                                            readOnly
+                                        />
                                     </div>
 
                                     {/* ================= Personal Documents ================= */}
