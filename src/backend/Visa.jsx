@@ -29,6 +29,7 @@ const Visa = () => {
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [passport, setPassport] = useState("");
+    const [invoice, setInvoice] = useState("");
     const [country, setCountry] = useState("");
     const [salesPerson, setSalesPerson] = useState("");
     const [date, setDate] = useState("");
@@ -47,6 +48,11 @@ const Visa = () => {
     const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
     const [searchQuery, setSearchQuery] = useState("");
+
+
+
+
+
     // Files grouped in one state object
     const [files, setFiles] = useState({
         image: null,
@@ -85,6 +91,28 @@ const Visa = () => {
             if (res.data.status) setTeamMembers(res.data.data);
         } catch (err) {
             console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
     };
 
@@ -135,6 +163,8 @@ const Visa = () => {
             const query = searchQuery.toLowerCase();
 
             const matchesSearch =
+                review.invoice?.toLowerCase() === query || // exact match fast
+                review.invoice?.toLowerCase().includes(query) ||
                 review.name?.toLowerCase().includes(query) ||
                 review.phone?.toLowerCase().includes(query) ||
                 review.team?.name?.toLowerCase().includes(query) ||
@@ -155,6 +185,18 @@ const Visa = () => {
         });
 
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+
+    // Pagination logic: current page এর items slice করা
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentReviews = filteredReviews.slice(indexOfFirstItem, indexOfLastItem);
+
+    const totalPages = Math.ceil(filteredReviews.length / itemsPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
 
     // Fetch Countries
     const [countries, setCountries] = useState([]);
@@ -162,8 +204,30 @@ const Visa = () => {
         try {
             const res = await axios.get(`${API_BASE}/all-country`);
             if (res.data.success) setCountries(res.data.data);
-        } catch {
-            toast.error("Failed to fetch countries");
+        } catch (err) {
+            console.error(err);
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
     };
 
@@ -175,7 +239,28 @@ const Visa = () => {
             if (res.data.status) setReviews(res.data.data);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to fetch reviews");
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         } finally {
             setLoading(false);
         }
@@ -192,7 +277,28 @@ const Visa = () => {
 
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load visa data");
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
     };
 
@@ -212,11 +318,13 @@ const Visa = () => {
                 setName(data.name);
                 setPhone(data.phone);
                 setPassport(data.passport);
+                setInvoice(data.invoice);
                 setCountry(data.country_id);
                 setSalesPerson(data.team_id);
                 setDate(data.date);
                 setAssetValuation(data.asset_valuation);
                 setSalaryAmount(data.salary_amount);
+                setApplicantType(data.applicant_type);
 
                 if (data.image) {
                     setPreview(data.image);
@@ -227,7 +335,28 @@ const Visa = () => {
 
         } catch (err) {
             console.error(err);
-            toast.error("Failed to load visa data");
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
     };
 
@@ -236,6 +365,10 @@ const Visa = () => {
         fetchCountries();
         fetchReviews();
     }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedMonth, selectedYear]);
 
 
     const renderFile = (file, label) => {
@@ -345,11 +478,14 @@ const Visa = () => {
         formData.append("name", name);
         formData.append("phone", phone);
         formData.append("passport", passport);
+        formData.append("invoice", invoice);
         formData.append("country", country);
         formData.append("salesPerson", salesPerson);
         formData.append("date", date);
         formData.append("assetValuation", assetValuation || 0);
         formData.append("salaryAmount", salaryAmount || 0);
+
+        formData.append("applicantType", applicantType);
 
         Object.entries(files).forEach(([key, file]) => {
             if (file) formData.append(key, file);
@@ -386,7 +522,28 @@ const Visa = () => {
 
         } catch (err) {
             console.error(err);
-            toast.error("Failed to save visa.");
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
 
     };
@@ -401,7 +558,28 @@ const Visa = () => {
             }
         } catch (err) {
             console.error(err);
-            toast.error("Failed to delete review.");
+
+            // ✅ Laravel validation error handle
+            if (err.response?.data?.errors) {
+
+                const errors = err.response.data.errors;
+
+                // First error message show
+                const firstError = Object.values(errors)[0][0];
+
+                toast.error(firstError);
+
+            }
+            // ✅ General message (like "message")
+            else if (err.response?.data?.message) {
+
+                toast.error(err.response.data.message);
+
+            }
+            // fallback
+            else {
+                toast.error("Something went wrong!");
+            }
         }
     };
 
@@ -452,7 +630,7 @@ const Visa = () => {
                                 <input
                                     type="text"
                                     className="form-control me-2"
-                                    placeholder="Search by name, phone, sales person"
+                                    placeholder="Search by name, phone, sales person, invoice"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
@@ -479,6 +657,7 @@ const Visa = () => {
                                             <th>Customer Name</th>
                                             <th>Customer Phone</th>
                                             <th>Passport</th>
+                                            <th>Invoice</th>
                                             <th>Country</th>
                                             <th>Sales Person</th>
                                             <th>Date</th>
@@ -486,13 +665,15 @@ const Visa = () => {
                                             <th>Action</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
-                                        {filteredReviews.length > 0 ? (
-                                            filteredReviews.map((review) => (
+                                        {currentReviews.length > 0 ? (
+                                            currentReviews.map((review) => (
                                                 <tr key={review.id}>
                                                     <td>{review.name}</td>
                                                     <td>{review.phone}</td>
                                                     <td>{review.passport}</td>
+                                                    <td>{review.invoice}</td>
                                                     <td>{review.country?.name}</td>
                                                     <td>{review.team?.name}</td>
                                                     <td>{review.date}</td>
@@ -522,16 +703,65 @@ const Visa = () => {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan={8} className="text-center">
-                                                    No Reviews Found
-                                                </td>
+                                                <td colSpan={9} className="text-center">No Reviews Found</td>
                                             </tr>
                                         )}
                                     </tbody>
+
                                 </table>
+
+
+
                             </div>
                         )}
+
                     </div>
+
+                    <div className="d-flex justify-content-center mt-3">
+                        <nav>
+                            <ul className="pagination align-items-center gap-1">
+
+                                {/* Previous Button */}
+                                <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                    <button
+                                        className="page-link d-flex align-items-center justify-content-center"
+                                        onClick={() => paginate(currentPage - 1)}
+                                    >
+                                        <i className="bi bi-chevron-left"></i>
+                                    </button>
+                                </li>
+
+                                {/* Page Numbers */}
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <li
+                                        key={i + 1}
+                                        className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                                    >
+                                        <button
+                                            className="page-link d-flex align-items-center justify-content-center"
+                                            onClick={() => paginate(i + 1)}
+                                            style={{ minWidth: "40px" }}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    </li>
+                                ))}
+
+                                {/* Next Button */}
+                                <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                    <button
+                                        className="page-link d-flex align-items-center justify-content-center"
+                                        onClick={() => paginate(currentPage + 1)}
+                                    >
+                                        <i className="bi bi-chevron-right"></i>
+                                    </button>
+                                </li>
+
+                            </ul>
+                        </nav>
+                    </div>
+
+
                     <Footer />
                 </div>
             </div>
@@ -549,6 +779,7 @@ const Visa = () => {
                                     className="btn-close"
                                     onClick={() => {
                                         setShowModal(false);
+                                        setApplicantType("");
                                         resetForm();
                                     }}
                                 ></button>
@@ -596,6 +827,16 @@ const Visa = () => {
                                             onChange={(e) => {
                                                 if (e.target.value.length <= 9) setPassport(e.target.value)
                                             }}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Invoice Number</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={invoice}
+                                            onChange={(e) => setInvoice(e.target.value)}
                                         />
                                     </div>
 
@@ -987,6 +1228,11 @@ const Visa = () => {
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Passport</label>
                                         <input className="form-control" value={viewData.passport} readOnly />
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Invoice</label>
+                                        <input className="form-control" value={viewData.invoice} readOnly />
                                     </div>
 
                                     <div className="col-md-6 mb-3">
