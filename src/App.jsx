@@ -28,6 +28,7 @@ import Headersetting from './backend/Headersetting.jsx';
 import Department from './backend/Department.jsx';
 import Settings from './backend/Settings.jsx';
 import Visa from './backend/Visa.jsx';
+import Target from './backend/Target.jsx';
 
 
 
@@ -61,9 +62,10 @@ function App() {
           <Route path="/admin-contact" element={<ContactUs />} />
           <Route path="/admin-team" element={<Team />} />
           <Route path="/admin-header" element={<Headersetting />} />
-           <Route path="/admin-depart" element={<Department />} />
+          <Route path="/admin-depart" element={<Department />} />
           <Route path="/admin-settings" element={<Settings />} />
-              <Route path="/admin-visa" element={<Visa />} />
+          <Route path="/admin-visa" element={<Visa />} />
+          <Route path="/admin-target" element={<Target />} />
 
 
           {/* Catch-all route */}

@@ -87,9 +87,9 @@ const Visa = () => {
 
 
     useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    setDate(today);
-}, []);
+        const today = new Date().toISOString().split("T")[0];
+        setDate(today);
+    }, []);
 
     // Fetch Team Members
     const [teamMembers, setTeamMembers] = useState([]);
@@ -241,129 +241,127 @@ const Visa = () => {
 
     // Fetch Reviews
     const fetchReviews = async () => {
-    setLoading(true);
+        setLoading(true);
 
-    try {
-        const token = localStorage.getItem("authToken");
+        try {
+            const token = localStorage.getItem("authToken");
 
-        const res = await axios.get(`${API_BASE}/get-reviews`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json"
+            const res = await axios.get(`${API_BASE}/get-reviews`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json"
+                }
+            });
+
+            if (res.data.status) setReviews(res.data.data);
+
+        } catch (err) {
+            console.error(err);
+
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const firstError = Object.values(errors)[0][0];
+                toast.error(firstError);
             }
-        });
-
-        if (res.data.status) setReviews(res.data.data);
-
-    } catch (err) {
-        console.error(err);
-
-        if (err.response?.data?.errors) {
-            const errors = err.response.data.errors;
-            const firstError = Object.values(errors)[0][0];
-            toast.error(firstError);
-        }
-        else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
-        }
-        else {
-            toast.error("Something went wrong!");
-        }
-
-    } finally {
-        setLoading(false);
-    }
-};
-
-  
-    
-const viewVisa = async (id) => {
-    try {
-
-        const token = localStorage.getItem("authToken");
-
-        const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
+            else if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
             }
-        });
+            else {
+                toast.error("Something went wrong!");
+            }
 
-        if (res.data.status) {
-            setViewData(res.data.data);
-            setViewModal(true);
+        } finally {
+            setLoading(false);
         }
+    };
 
-    } catch (err) {
-        console.error(err);
+    const viewVisa = async (id) => {
+        try {
 
-        if (err.response?.data?.errors) {
-            const errors = err.response.data.errors;
-            const firstError = Object.values(errors)[0][0];
-            toast.error(firstError);
-        }
-        else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
-        }
-        else {
-            toast.error("Something went wrong!");
-        }
-    }
-};
+            const token = localStorage.getItem("authToken");
 
-    
+            const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.data.status) {
+                setViewData(res.data.data);
+                setViewModal(true);
+            }
+
+        } catch (err) {
+            console.error(err);
+
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const firstError = Object.values(errors)[0][0];
+                toast.error(firstError);
+            }
+            else if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
+        }
+    };
+
+
     const editVisa = async (id) => {
-    try {
+        try {
 
-        const token = localStorage.getItem("authToken");
+            const token = localStorage.getItem("authToken");
 
-        const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
+            const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.data.status) {
+
+                const data = res.data.data;
+
+                setViewData(data);
+
+                setEditId(data.id);
+                setName(data.name);
+                setPhone(data.phone);
+                setPassport(data.passport);
+                setInvoice(data.invoice);
+                setCountry(data.country_id);
+                setSalesPerson(data.team_id);
+                setDate(data.date);
+                setAssetValuation(data.asset_valuation);
+                setSalaryAmount(data.salary_amount);
+                setApplicantType(data.applicant_type);
+                setMemberName(data.member || "");
+
+                if (data.image) {
+                    setPreview(data.image);
+                }
+
+                setShowModal(true);
             }
-        });
 
-        if (res.data.status) {
+        } catch (err) {
+            console.error(err);
 
-            const data = res.data.data;
-
-            setViewData(data);
-
-            setEditId(data.id);
-            setName(data.name);
-            setPhone(data.phone);
-            setPassport(data.passport);
-            setInvoice(data.invoice);
-            setCountry(data.country_id);
-            setSalesPerson(data.team_id);
-            setDate(data.date);
-            setAssetValuation(data.asset_valuation);
-            setSalaryAmount(data.salary_amount);
-            setApplicantType(data.applicant_type);
-            setMemberName(data.member || "");
-
-            if (data.image) {
-                setPreview(data.image);
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const firstError = Object.values(errors)[0][0];
+                toast.error(firstError);
             }
-
-            setShowModal(true);
+            else if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
         }
-
-    } catch (err) {
-        console.error(err);
-
-        if (err.response?.data?.errors) {
-            const errors = err.response.data.errors;
-            const firstError = Object.values(errors)[0][0];
-            toast.error(firstError);
-        }
-        else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
-        }
-        else {
-            toast.error("Something went wrong!");
-        }
-    }
-};
+    };
 
 
     useEffect(() => {
@@ -429,51 +427,51 @@ const viewVisa = async (id) => {
     };
 
 
-const resetForm = () => {
+    const resetForm = () => {
 
-    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD format
 
-    setName("");
-    setPhone("");
-    setPassport("");
-    setInvoice("");
-    setCountry("");
-    setSalesPerson("");
-    setApplicantType("");
+        setName("");
+        setPhone("");
+        setPassport("");
+        setInvoice("");
+        setCountry("");
+        setSalesPerson("");
+        setApplicantType("");
 
-    setDate(today);   // 🔥 এখানে fix
+        setDate(today);   // 🔥 এখানে fix
 
-    setAssetValuation("");
-    setSalaryAmount("");
-    setMemberName(1);
+        setAssetValuation("");
+        setSalaryAmount("");
+        setMemberName(1);
 
-    setEditId(null);
-    setViewData(null);
+        setEditId(null);
+        setViewData(null);
 
-    setFiles({
-        image: null,
-        bankCertificate: null,
-        nidFile: null,
-        birthCertificate: null,
-        marriageCertificate: null,
-        fixedDepositCertificate: null,
-        taxCertificate: null,
-        tinCertificate: null,
-        creditCardCopy: null,
-        covidCertificate: null,
-        nocLetter: null,
-        officeId: null,
-        salarySlips: null,
-        governmentOrder: null,
-        visitingCard: null,
-        companyBankStatement: null,
-        blankOfficePad: null,
-        renewalTradeLicense: null,
-        memorandumLimited: null,
-    });
+        setFiles({
+            image: null,
+            bankCertificate: null,
+            nidFile: null,
+            birthCertificate: null,
+            marriageCertificate: null,
+            fixedDepositCertificate: null,
+            taxCertificate: null,
+            tinCertificate: null,
+            creditCardCopy: null,
+            covidCertificate: null,
+            nocLetter: null,
+            officeId: null,
+            salarySlips: null,
+            governmentOrder: null,
+            visitingCard: null,
+            companyBankStatement: null,
+            blankOfficePad: null,
+            renewalTradeLicense: null,
+            memorandumLimited: null,
+        });
 
-    setPreview(null);
-};
+        setPreview(null);
+    };
 
     // Submit Review
 
@@ -567,254 +565,221 @@ const resetForm = () => {
     // };
 
 
-//     const submitReview = async () => {
+    //     const submitReview = async () => {
 
-//     if (phone.length !== 11) {
-//         toast.error("Customer Phone number must be exactly 11 digits");
-//         return;
-//     }
+    //     if (phone.length !== 11) {
+    //         toast.error("Customer Phone number must be exactly 11 digits");
+    //         return;
+    //     }
 
-//     if (passport.length < 6 || passport.length > 9) {
-//         toast.error("Passport Number must be between 6 and 9 digits");
-//         return;
-//     }
+    //     if (passport.length < 6 || passport.length > 9) {
+    //         toast.error("Passport Number must be between 6 and 9 digits");
+    //         return;
+    //     }
 
-//     const formData = new FormData();
+    //     const formData = new FormData();
 
-//     formData.append("name", name);
-//     formData.append("phone", phone);
-//     formData.append("passport", passport);
-//     formData.append("invoice", invoice);
-//     formData.append("country", country);
-//     formData.append("salesPerson", salesPerson);
-//     formData.append("date", date);
-//     formData.append("assetValuation", assetValuation || 0);
-//     formData.append("salaryAmount", salaryAmount || 0);
-//     formData.append("member", memberName);
-//     formData.append("applicantType", applicantType);
+    //     formData.append("name", name);
+    //     formData.append("phone", phone);
+    //     formData.append("passport", passport);
+    //     formData.append("invoice", invoice);
+    //     formData.append("country", country);
+    //     formData.append("salesPerson", salesPerson);
+    //     formData.append("date", date);
+    //     formData.append("assetValuation", assetValuation || 0);
+    //     formData.append("salaryAmount", salaryAmount || 0);
+    //     formData.append("member", memberName);
+    //     formData.append("applicantType", applicantType);
 
-//     Object.entries(files).forEach(([key, file]) => {
-//         if (file) formData.append(key, file);
-//     });
+    //     Object.entries(files).forEach(([key, file]) => {
+    //         if (file) formData.append(key, file);
+    //     });
 
-//     try {
-
-//         const token = localStorage.getItem("authToken"); // ✅ GET TOKEN
-
-//         let res;
-
-//         if (editId) {
-
-//             res = await axios.post(`${API_BASE}/visa-update/${editId}`, formData, {
-//                 headers: {
-//                     "Content-Type": "multipart/form-data",
-//                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
-//                 }
-//             });
-
-//         } else {
-
-//             res = await axios.post(`${API_BASE}/add-reviews`, formData, {
-//                 headers: {
-//                     "Content-Type": "multipart/form-data",
-//                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
-//                 }
-//             });
-
-//         }
-
-//         if (res.data.status) {
-
-//             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-//             setShowModal(false);
-//             resetForm();
-//             setEditId(null);
-//             fetchReviews();
-
-//         }
-
-//     } catch (err) {
-//         console.error(err);
-
-//         if (err.response?.data?.errors) {
-//             const errors = err.response.data.errors;
-//             const firstError = Object.values(errors)[0][0];
-//             toast.error(firstError);
-//         }
-//         else if (err.response?.data?.message) {
-//             toast.error(err.response.data.message);
-//         }
-//         else {
-//             toast.error("Something went wrong!");
-//         }
-//     }
-// };
-
-
-const submitReview = async () => {
-
-    if (phone.length !== 11) {
-        toast.error("Customer Phone number must be exactly 11 digits");
-        return;
-    }
-
-    if (passport.length < 6 || passport.length > 9) {
-        toast.error("Passport Number must be between 6 and 9 digits");
-        return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("name", name);
-    formData.append("phone", phone);
-    formData.append("passport", passport);
-    formData.append("invoice", invoice);
-    formData.append("country", country);
-    formData.append("salesPerson", salesPerson);
-    formData.append("date", date);
-    formData.append("assetValuation", assetValuation || 0);
-    formData.append("salaryAmount", salaryAmount || 0);
-    formData.append("member", memberName);
-    formData.append("applicantType", applicantType);
-
-    Object.entries(files).forEach(([key, file]) => {
-        if (file) formData.append(key, file);
-    });
-
-    try {
-
-        const token = localStorage.getItem("authToken");
-
-        let res;
-
-        if (editId) {
-
-            res = await axios.post(
-                `${API_BASE}/visa-update/${editId}`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-        } else {
-
-            res = await axios.post(
-                `${API_BASE}/add-reviews`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
-            );
-
-        }
-
-        if (res.data.status) {
-
-            toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-            setShowModal(false);
-            resetForm();
-            setEditId(null);
-            fetchReviews();
-
-        }
-
-    } catch (err) {
-        console.error(err);
-
-        if (err.response?.data?.errors) {
-            const errors = err.response.data.errors;
-            const firstError = Object.values(errors)[0][0];
-            toast.error(firstError);
-        }
-        else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
-        }
-        else {
-            toast.error("Something went wrong!");
-        }
-    }
-};
-
-
-
-    // Delete Review
-
-
-    // const deleteReview = async (id) => {
-    //     if (!window.confirm("Are you sure you want to delete this review?")) return;
     //     try {
-    //         const res = await axios.delete(`${API_BASE}/del-reviews/${id}`);
-    //         if (res.data.status) {
-    //             toast.success("Review deleted successfully!");
-    //             fetchReviews();
+
+    //         const token = localStorage.getItem("authToken"); // ✅ GET TOKEN
+
+    //         let res;
+
+    //         if (editId) {
+
+    //             res = await axios.post(`${API_BASE}/visa-update/${editId}`, formData, {
+    //                 headers: {
+    //                     "Content-Type": "multipart/form-data",
+    //                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
+    //                 }
+    //             });
+
+    //         } else {
+
+    //             res = await axios.post(`${API_BASE}/add-reviews`, formData, {
+    //                 headers: {
+    //                     "Content-Type": "multipart/form-data",
+    //                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
+    //                 }
+    //             });
+
     //         }
+
+    //         if (res.data.status) {
+
+    //             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
+
+    //             setShowModal(false);
+    //             resetForm();
+    //             setEditId(null);
+    //             fetchReviews();
+
+    //         }
+
     //     } catch (err) {
     //         console.error(err);
 
-    //         // ✅ Laravel validation error handle
     //         if (err.response?.data?.errors) {
-
     //             const errors = err.response.data.errors;
-
-    //             // First error message show
     //             const firstError = Object.values(errors)[0][0];
-
     //             toast.error(firstError);
-
     //         }
-    //         // ✅ General message (like "message")
     //         else if (err.response?.data?.message) {
-
     //             toast.error(err.response.data.message);
-
     //         }
-    //         // fallback
     //         else {
     //             toast.error("Something went wrong!");
     //         }
     //     }
     // };
 
-    const deleteReview = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
 
-    try {
-        const token = localStorage.getItem("authToken"); // ✅ GET TOKEN
+    const submitReview = async () => {
 
-        const res = await axios.delete(`${API_BASE}/del-reviews/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}` // ✅ ADD TOKEN
-            }
+        if (phone.length !== 11) {
+            toast.error("Customer Phone number must be exactly 11 digits");
+            return;
+        }
+
+        if (passport.length < 6 || passport.length > 9) {
+            toast.error("Passport Number must be between 6 and 9 digits");
+            return;
+        }
+
+        const formData = new FormData();
+
+        formData.append("name", name);
+        formData.append("phone", phone);
+        formData.append("passport", passport);
+        formData.append("invoice", invoice);
+        formData.append("country", country);
+        formData.append("salesPerson", salesPerson);
+        formData.append("date", date);
+        formData.append("assetValuation", assetValuation || 0);
+        formData.append("salaryAmount", salaryAmount || 0);
+        formData.append("member", memberName);
+        formData.append("applicantType", applicantType);
+
+        Object.entries(files).forEach(([key, file]) => {
+            if (file) formData.append(key, file);
         });
 
-        if (res.data.status) {
-            toast.success("Review deleted successfully!");
-            fetchReviews();
-        }
+        try {
 
-    } catch (err) {
-        console.error(err);
+            const token = localStorage.getItem("authToken");
 
-        if (err.response?.data?.errors) {
-            const errors = err.response.data.errors;
-            const firstError = Object.values(errors)[0][0];
-            toast.error(firstError);
+            let res;
+
+            if (editId) {
+
+                res = await axios.post(
+                    `${API_BASE}/visa-update/${editId}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+            } else {
+
+                res = await axios.post(
+                    `${API_BASE}/add-reviews`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+            }
+
+            if (res.data.status) {
+
+                toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
+
+                setShowModal(false);
+                resetForm();
+                setEditId(null);
+                fetchReviews();
+
+            }
+
+        } catch (err) {
+            console.error(err);
+
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const firstError = Object.values(errors)[0][0];
+                toast.error(firstError);
+            }
+            else if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
         }
-        else if (err.response?.data?.message) {
-            toast.error(err.response.data.message);
+    };
+
+
+
+    // Delete Review
+
+
+    
+
+    const deleteReview = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+        try {
+            const token = localStorage.getItem("authToken"); // ✅ GET TOKEN
+
+            const res = await axios.delete(`${API_BASE}/del-reviews/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}` // ✅ ADD TOKEN
+                }
+            });
+
+            if (res.data.status) {
+                toast.success("Review deleted successfully!");
+                fetchReviews();
+            }
+
+        } catch (err) {
+            console.error(err);
+
+            if (err.response?.data?.errors) {
+                const errors = err.response.data.errors;
+                const firstError = Object.values(errors)[0][0];
+                toast.error(firstError);
+            }
+            else if (err.response?.data?.message) {
+                toast.error(err.response.data.message);
+            }
+            else {
+                toast.error("Something went wrong!");
+            }
         }
-        else {
-            toast.error("Something went wrong!");
-        }
-    }
-};
+    };
 
 
 
@@ -932,9 +897,16 @@ const submitReview = async () => {
                                                         <button className="btn btn-warning btn-sm me-2" onClick={() => editVisa(review.id)}>
                                                             <i className="bi bi-pencil"></i>
                                                         </button>
-                                                        <button className="btn btn-danger btn-sm" onClick={() => deleteReview(review.id)}>
-                                                            <i className="bi bi-trash"></i>
-                                                        </button>
+
+                                                        {userRole === "admin" && (
+                                                            <button
+                                                                className="btn btn-danger btn-sm"
+                                                                onClick={() => deleteReview(review.id)}
+                                                            >
+                                                                <i className="bi bi-trash"></i>
+                                                            </button>
+                                                        )}
+
                                                     </td>
                                                 </tr>
                                             ))
