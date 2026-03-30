@@ -473,181 +473,6 @@ const Visa = () => {
         setPreview(null);
     };
 
-    // Submit Review
-
-
-    // const submitReview = async () => {
-
-    //     if (phone.length !== 11) {
-    //         toast.error("Customer Phone number must be exactly 11 digits");
-    //         return;
-    //     }
-
-    //     if (passport.length < 6 || passport.length > 9) {
-    //         toast.error("Passport Number must be between 6 and 9 digits");
-    //         return;
-    //     }
-
-    //     const formData = new FormData();
-
-    //     formData.append("name", name);
-    //     formData.append("phone", phone);
-    //     formData.append("passport", passport);
-    //     formData.append("invoice", invoice);
-    //     formData.append("country", country);
-    //     formData.append("salesPerson", salesPerson);
-    //     formData.append("date", date);
-    //     formData.append("assetValuation", assetValuation || 0);
-    //     formData.append("salaryAmount", salaryAmount || 0);
-    //     formData.append("member", memberName);
-
-    //     formData.append("applicantType", applicantType);
-
-    //     Object.entries(files).forEach(([key, file]) => {
-    //         if (file) formData.append(key, file);
-    //     });
-
-    //     try {
-
-    //         let res;
-
-    //         if (editId) {
-
-    //             res = await axios.post(`${API_BASE}/visa-update/${editId}`, formData, {
-    //                 headers: { "Content-Type": "multipart/form-data" }
-    //             });
-
-    //         } else {
-
-    //             res = await axios.post(`${API_BASE}/add-reviews`, formData, {
-    //                 headers: { "Content-Type": "multipart/form-data" }
-    //             });
-
-    //         }
-
-    //         if (res.data.status) {
-
-    //             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-    //             setShowModal(false);
-    //             resetForm();
-    //             setEditId(null);
-    //             fetchReviews();
-
-    //         }
-
-    //     } catch (err) {
-    //         console.error(err);
-
-    //         // ✅ Laravel validation error handle
-    //         if (err.response?.data?.errors) {
-
-    //             const errors = err.response.data.errors;
-
-    //             // First error message show
-    //             const firstError = Object.values(errors)[0][0];
-
-    //             toast.error(firstError);
-
-    //         }
-    //         // ✅ General message (like "message")
-    //         else if (err.response?.data?.message) {
-
-    //             toast.error(err.response.data.message);
-
-    //         }
-    //         // fallback
-    //         else {
-    //             toast.error("Something went wrong!");
-    //         }
-    //     }
-
-    // };
-
-
-    //     const submitReview = async () => {
-
-    //     if (phone.length !== 11) {
-    //         toast.error("Customer Phone number must be exactly 11 digits");
-    //         return;
-    //     }
-
-    //     if (passport.length < 6 || passport.length > 9) {
-    //         toast.error("Passport Number must be between 6 and 9 digits");
-    //         return;
-    //     }
-
-    //     const formData = new FormData();
-
-    //     formData.append("name", name);
-    //     formData.append("phone", phone);
-    //     formData.append("passport", passport);
-    //     formData.append("invoice", invoice);
-    //     formData.append("country", country);
-    //     formData.append("salesPerson", salesPerson);
-    //     formData.append("date", date);
-    //     formData.append("assetValuation", assetValuation || 0);
-    //     formData.append("salaryAmount", salaryAmount || 0);
-    //     formData.append("member", memberName);
-    //     formData.append("applicantType", applicantType);
-
-    //     Object.entries(files).forEach(([key, file]) => {
-    //         if (file) formData.append(key, file);
-    //     });
-
-    //     try {
-
-    //         const token = localStorage.getItem("authToken"); // ✅ GET TOKEN
-
-    //         let res;
-
-    //         if (editId) {
-
-    //             res = await axios.post(`${API_BASE}/visa-update/${editId}`, formData, {
-    //                 headers: {
-    //                     "Content-Type": "multipart/form-data",
-    //                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
-    //                 }
-    //             });
-
-    //         } else {
-
-    //             res = await axios.post(`${API_BASE}/add-reviews`, formData, {
-    //                 headers: {
-    //                     "Content-Type": "multipart/form-data",
-    //                     Authorization: `Bearer ${token}` // ✅ ADD TOKEN
-    //                 }
-    //             });
-
-    //         }
-
-    //         if (res.data.status) {
-
-    //             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-    //             setShowModal(false);
-    //             resetForm();
-    //             setEditId(null);
-    //             fetchReviews();
-
-    //         }
-
-    //     } catch (err) {
-    //         console.error(err);
-
-    //         if (err.response?.data?.errors) {
-    //             const errors = err.response.data.errors;
-    //             const firstError = Object.values(errors)[0][0];
-    //             toast.error(firstError);
-    //         }
-    //         else if (err.response?.data?.message) {
-    //             toast.error(err.response.data.message);
-    //         }
-    //         else {
-    //             toast.error("Something went wrong!");
-    //         }
-    //     }
-    // };
 
 
     const submitReview = async () => {
@@ -1095,38 +920,36 @@ const Visa = () => {
                                         <div className="d-flex align-items-center justify-content-center gap-3">
 
                                             {/* Minus Button */}
-                                            <button
-                                                type="button"
-                                                className="btn rounded-circle border"
-                                                style={{ width: "40px", height: "40px" }}
-                                                onClick={() => {
-                                                    if (memberName > 1) {
-                                                        setMemberName(memberName - 1);
-                                                    }
-                                                }}
-                                            >
-                                                -
-                                            </button>
+                                           <button
+    type="button"
+    className="btn rounded-circle border"
+    style={{ width: "40px", height: "40px" }}
+    onClick={() => {
+        setMemberName((prev) => Math.max(1, Number(prev || 1) - 1));
+    }}
+>
+    -
+</button>
 
-                                            {/* Number Display */}
-                                            <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
-                                                {memberName || 1}
-                                            </span>
+<span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
+    {memberName || 1}
+</span>
 
-                                            {/* Plus Button */}
-                                            <button
-                                                type="button"
-                                                className="btn rounded-circle border"
-                                                style={{ width: "40px", height: "40px" }}
-                                                onClick={() => {
-                                                    setMemberName((prev) => (prev ? prev + 1 : 1));
-                                                }}
-                                            >
-                                                +
-                                            </button>
+<button
+    type="button"
+    className="btn rounded-circle border"
+    style={{ width: "40px", height: "40px" }}
+    onClick={() => {
+        setMemberName((prev) => Number(prev || 1) + 1);
+    }}
+>
+    +
+</button>
 
                                         </div>
                                     </div>
+
+                                    
 
                                     <div className="col-12 mb-3">
                                         <label className="form-label me-3">Applicant Type:</label>

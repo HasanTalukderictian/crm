@@ -24,7 +24,18 @@ const Target = () => {
     const userId = Number(localStorage.getItem("userId"));
 
 
-    
+
+    useEffect(() => {
+        if (userRole === "admin") {
+            setFilteredUsers(users);
+        } else {
+            const myUser = users.filter(u => u.id === userId);
+            setFilteredUsers(myUser);
+        }
+    }, [users, userRole, userId]);
+
+
+
     const [targets, setTargets] = useState([]);
 
     const getVisibleTargets = () => {
@@ -41,7 +52,7 @@ const Target = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
 
-    
+
 
     const openModal = (user) => {
         resetModal();
@@ -117,9 +128,7 @@ const Target = () => {
         }
     };
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+
 
     // ================= RESET FUNCTION =================
     const resetModal = () => {
@@ -212,8 +221,9 @@ const Target = () => {
 
                 <div className="container mt-4">
 
-                    <h2 className="mb-3">Target Management</h2>
-
+                    <h2 className="mb-3">
+                        {userRole === "admin" ? "Target Management" : "My Target"}
+                    </h2>
                     {/* TABLE */}
                     <table className="table table-bordered">
                         <thead className="table-dark">
@@ -222,17 +232,20 @@ const Target = () => {
                                 <th>Year</th>
                                 <th>Month</th>
                                 <th>Target</th>
+                                <th>Achieved</th>
+                                <th>Remaining</th>
+                                <th>Progress</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
-
 
                         <tbody>
                             {filteredUsers.length > 0 ? (
                                 currentUsers.map(user => {
 
-                                    // 🔥 role based target
-                                    const userTarget = visibleTargets.find(t => t.user_id === user.id);
+                                    const userTarget = visibleTargets.find(
+                                        t => t.user_id === user.id
+                                    );
 
                                     return (
                                         <tr key={user.id}>
@@ -241,21 +254,45 @@ const Target = () => {
                                             <td>{userTarget ? userTarget.year : "-"}</td>
 
                                             <td>
-                                                {userTarget ? getMonthName(userTarget.month) : "-"}
+                                                {userTarget
+                                                    ? getMonthName(userTarget.month)
+                                                    : "-"}
+                                            </td>
+
+                                            <td>{userTarget ? userTarget.target : 0}</td>
+
+                                            <td>{userTarget ? userTarget.achieved : 0}</td>
+
+                                            <td>{userTarget ? userTarget.remaining : 0}</td>
+
+                                            <td>
+                                                {userTarget ? (
+                                                    <>
+                                                        {userTarget.progress}%
+                                                        <div
+                                                            className="progress mt-1"
+                                                            style={{ height: "6px" }}
+                                                        >
+                                                            <div
+                                                                className="progress-bar bg-success"
+                                                                style={{
+                                                                    width: `${userTarget.progress}%`
+                                                                }}
+                                                            ></div>
+                                                        </div>
+                                                    </>
+                                                ) : "0%"}
                                             </td>
 
                                             <td>
-                                                {userTarget ? userTarget.target : 0}
-                                            </td>
-
-                                            <td>
-                                                {/* user only own target edit, admin can edit all */}
-                                                {(userRole === "admin" || user.id === userId) && (
+                                                {userRole === "admin" && (
                                                     <button
                                                         className="btn btn-success btn-sm"
                                                         onClick={() => openModal(user)}
                                                     >
-                                                        {userTarget ? "Edit Target" : "Set Target"}
+                                                        {userTarget
+                                                            ? "Edit Target"
+                                                            : "Set Target"}
                                                     </button>
                                                 )}
                                             </td>
@@ -264,14 +301,12 @@ const Target = () => {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan="7" className="text-center">
+                                    <td colSpan="8" className="text-center">
                                         No users found
                                     </td>
                                 </tr>
                             )}
                         </tbody>
-
-
                     </table>
 
                     {/* PAGINATION */}
