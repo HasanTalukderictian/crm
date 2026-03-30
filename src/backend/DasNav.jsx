@@ -9,12 +9,88 @@ const DashNav = () => {
     const [companyName, setCompanyName] = useState('Gazi Builders');
     const [logo, setLogo] = useState('https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
     const [yourName, setYourName] = useState('');
-    const [image, setImage] = useState(null);
+
 
     const [formCompanyName, setFormCompanyName] = useState('');
     const [formImage, setFormImage] = useState(null);
 
     const userRole = localStorage.getItem("userRole");
+
+
+    const [notifications, setNotifications] = useState([]);
+
+
+    const fetchNotifications = async () => {
+        try {
+           const token = localStorage.getItem("authToken");// যদি auth token থাকে
+
+            const res = await fetch(`${API_BASE}/notifications`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json"
+                }
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status) {
+                setNotifications(data.data);
+            }
+        } catch (error) {
+            console.error("Notification fetch error:", error);
+        }
+    };
+
+  
+
+    useEffect(() => {
+    fetchNotifications();
+}, []);
+
+
+const handleNotificationClick = async () => {
+    const token = localStorage.getItem("authToken");
+
+    try {
+        const res = await fetch(`${API_BASE}/notifications`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json",
+            },
+        });
+
+        const data = await res.json();
+
+        if (data.status) {
+            const notis = data.data || [];
+
+            setNotifications(notis);
+
+            // 👉 unread notifications
+            const unread = notis.filter(n => !n.is_read);
+
+            // 👉 show messages
+            unread.forEach(n => alert(n.message));
+
+            // 👉 mark all as read (optional best practice)
+            await fetch(`${API_BASE}/notifications/read-all`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json",
+                },
+            });
+
+            // 👉 update UI instantly
+            setNotifications(prev =>
+                prev.map(n => ({ ...n, is_read: true }))
+            );
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+};
 
     // Fetch company info
     const fetchCompanyInfo = async () => {
@@ -86,6 +162,14 @@ const DashNav = () => {
         });
     };
 
+
+    useEffect(() => {
+        const name = localStorage.getItem("userName");
+        if (name) {
+            setYourName(name);
+        }
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData();
@@ -123,19 +207,58 @@ const DashNav = () => {
     return (
         <>
             <div className="d-flex container justify-content-center">
-                <nav className="navbar bg-white shadow-sm py-2 px-4 d-flex justify-content-between align-items-center" style={{ maxWidth: "1500px", width: "100%" }}>
+                <nav
+                    className="navbar bg-white shadow-sm py-2 px-4 d-flex justify-content-between align-items-center"
+                    style={{ maxWidth: "1500px", width: "100%" }}
+                >
+
+                    {/* 🔵 Left Side (Logo + Name) */}
                     <div className="d-flex align-items-center">
                         <img src={logo} alt="Company Logo" className="me-2" style={{ height: "40px" }} />
-                        <h4 className="fw-bold text-primary">{companyName}</h4>
-
+                        <h4 className="fw-bold text-primary m-0">{companyName}</h4>
                     </div>
 
-                    <div className="d-flex align-items-center">
+                    {/* 🔵 Right Side (Notification + User) */}
+                    <div className="d-flex align-items-center gap-4">
+
+                        {/* 🔔 Notification Icon */}
+
+
+                        <div
+                            style={{ position: "relative", cursor: "pointer" }}
+                            onClick={handleNotificationClick}
+                        >
+                            <i className="bi bi-bell fs-4"></i>
+
+                            <span
+                                style={{
+                                    position: "absolute",
+                                    top: "-5px",
+                                    right: "-8px",
+                                    background: "red",
+                                    color: "white",
+                                    borderRadius: "50%",
+                                    fontSize: "10px",
+                                    padding: "2px 6px",
+                                    minWidth: "18px",
+                                    textAlign: "center"
+                                }}
+                            >
+                                {notifications.filter(n => !n.is_read).length || 0}
+                            </span>
+                        </div>
+
+
+
+                        {/* 👤 User Info */}
                         <div className="mt-1 mb-1">
                             <span className="d-block text-muted">Hello,</span>
                             <span
                                 className="fw-bold"
-                                style={{ cursor: userRole === 'admin' ? 'pointer' : 'default', color: "#0d6efd" }}
+                                style={{
+                                    cursor: userRole === 'admin' ? 'pointer' : 'default',
+                                    color: "#0d6efd"
+                                }}
                                 onClick={() => {
                                     if (userRole === 'admin') {
                                         setFormCompanyName(companyName);
@@ -146,11 +269,11 @@ const DashNav = () => {
                             >
                                 {yourName || 'Admin'}
                             </span>
-                            <p className="small text-muted m-0 d-flex align-items-center">
+                            <p className="small text-muted m-0">
                                 Welcome to our panel
-                                {/* <span className="ms-2">😊</span> */}
                             </p>
                         </div>
+
                     </div>
                 </nav>
             </div>

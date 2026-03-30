@@ -570,7 +570,7 @@ const Visa = () => {
     // Delete Review
 
 
-    
+
 
     const deleteReview = async (id) => {
         if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -920,36 +920,36 @@ const Visa = () => {
                                         <div className="d-flex align-items-center justify-content-center gap-3">
 
                                             {/* Minus Button */}
-                                           <button
-    type="button"
-    className="btn rounded-circle border"
-    style={{ width: "40px", height: "40px" }}
-    onClick={() => {
-        setMemberName((prev) => Math.max(1, Number(prev || 1) - 1));
-    }}
->
-    -
-</button>
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => {
+                                                    setMemberName((prev) => Math.max(1, Number(prev || 1) - 1));
+                                                }}
+                                            >
+                                                -
+                                            </button>
 
-<span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
-    {memberName || 1}
-</span>
+                                            <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
+                                                {memberName || 1}
+                                            </span>
 
-<button
-    type="button"
-    className="btn rounded-circle border"
-    style={{ width: "40px", height: "40px" }}
-    onClick={() => {
-        setMemberName((prev) => Number(prev || 1) + 1);
-    }}
->
-    +
-</button>
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => {
+                                                    setMemberName((prev) => Number(prev || 1) + 1);
+                                                }}
+                                            >
+                                                +
+                                            </button>
 
                                         </div>
                                     </div>
 
-                                    
+
 
                                     <div className="col-12 mb-3">
                                         <label className="form-label me-3">Applicant Type:</label>

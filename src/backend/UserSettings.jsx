@@ -24,7 +24,14 @@ const UserSettings = () => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-  
+
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState(null);
+
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+
 
     const fetchUsers = async () => {
         try {
@@ -54,7 +61,56 @@ const UserSettings = () => {
         fetchUsers();
     }, []);
 
-    
+
+    const openResetModal = (userId) => {
+        setSelectedUserId(userId);
+        setShowResetModal(true);
+    };
+
+    const closeResetModal = () => {
+        setShowResetModal(false);
+        setSelectedUserId(null);
+        setNewPassword("");
+        setConfirmPassword("");
+    };
+
+
+    const handleResetPassword = async (e) => {
+        e.preventDefault();
+
+        if (newPassword !== confirmPassword) {
+            alert("Passwords do not match");
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem("adminToken");
+
+            const response = await fetch(`${API_BASE}/users/${selectedUserId}/reset-password`, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({
+                    password: newPassword,
+                    password_confirmation: confirmPassword
+                })
+            });
+
+            if (response.ok) {
+                alert("Password reset successful");
+                closeResetModal();
+            } else {
+                alert("Failed to reset password");
+            }
+
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
 
 
     const toggleStatus = async (userId, currentStatus) => {
@@ -190,6 +246,7 @@ const UserSettings = () => {
                                     <th>Role</th>
                                     <th>Email</th>
                                     <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -212,6 +269,15 @@ const UserSettings = () => {
                                                     {user.active ? 'Active' : 'Inactive'}
                                                 </button>
                                             </td>
+
+                                            <td>
+                                                <button
+                                                    className="btn btn-sm btn-success"
+                                                    onClick={() => openResetModal(user.id)}
+                                                >
+                                                    Reset Password
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
@@ -223,7 +289,59 @@ const UserSettings = () => {
                                 )}
                             </tbody>
                         </table>
+                        
+
+
+
+                          
                     </div>
+
+                    {showResetModal && (
+    <div className="modal fade show d-block" style={{ background: "rgba(0,0,0,0.5)" }}>
+        <div className="modal-dialog">
+            <div className="modal-content">
+
+                <div className="modal-header">
+                    <h5>Reset Password</h5>
+                    <button className="btn-close" onClick={closeResetModal}></button>
+                </div>
+
+                <div className="modal-body">
+                    <form onSubmit={handleResetPassword}>
+
+                        <div className="mb-3">
+                            <label>New Password</label>
+                            <input
+                                type="password"
+                                className="form-control"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="mb-3">
+                            <label>Confirm Password</label>
+                            <input
+                                type="password"
+                                className="form-control"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <button className="btn btn-success btn-sm">
+                            Reset Password
+                        </button>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+)} 
 
                     {/* Pagination buttons */}
                     <div className="d-flex justify-content-center mt-3">
