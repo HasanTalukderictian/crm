@@ -1,80 +1,52 @@
-/* Dashboard wrapper */
+/* MAIN WRAPPER */
 
 .dashboard-wrapper {
-    padding-left: 15px;
-    padding-right: 15px;
-    margin: 0 auto;
-    /* center content */
-    max-width: 1400px;
-    /* constrain max width on large screens */
+    margin-left: 260px;
+    /* sidebar width */
+    padding: 20px;
+    min-height: 100vh;
+    max-width: 1350px;
 }
 
 
-/* Desktop Sidebar spacing */
-
-@media (min-width: 992px) {
-    .dashboard-wrapper {
-        padding-left: 270px;
-        /* leave sidebar space */
-        padding-right: 30px;
-    }
-}
-
-
-/* Dashboard Title */
-
-.dashboard-title {
-    font-size: 2rem;
-    @media (max-width: 991px) {
-        font-size: 1.5rem;
-        text-align: center;
-        /* center title on mobile */
-    }
-}
-
-
-/* Cards number styling */
-
-.card-text.display-4 {
-    font-size: 3rem;
-    /* desktop big numbers */
-    @media (max-width: 991px) {
-        font-size: 2rem;
-        /* smaller on mobile */
-    }
-}
-
-
-/* Card Titles */
-
-.card-title-orders,
-.card-title-products,
-.card-title-users {
-    font-size: 1.25rem;
-    @media (max-width: 991px) {
-        font-size: 1rem;
-    }
-}
-
-
-/* Charts styling */
-
-.pie-chart,
-.bar-chart {
-    width: 100%;
-    max-width: 100%;
-    height: 300px;
-    @media (max-width: 767px) {
-        height: 250px;
-    }
-}
-
-
-/* Optional: center charts on mobile */
+/* MOBILE FIX */
 
 @media (max-width: 991px) {
-    .pie-chart,
-    .bar-chart {
-        margin: 0 auto;
+    .dashboard-wrapper {
+        margin-left: 0;
+        padding: 15px;
     }
+}
+
+
+/* GRID FIX (important) */
+
+.dashboard-wrapper .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+
+/* CARD DESIGN */
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+
+/* TITLE */
+
+.dashboard-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+
+/* CHART FIX */
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
 }
