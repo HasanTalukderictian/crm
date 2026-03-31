@@ -205,6 +205,8 @@ const Visa = () => {
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+    const [status, setStatus] = useState("Pending");
+
 
     // Fetch Countries
     const [countries, setCountries] = useState([]);
@@ -238,6 +240,13 @@ const Visa = () => {
             }
         }
     };
+
+
+    useEffect(() => {
+        if (viewData) {
+            setStatus(viewData.status || "Pending");
+        }
+    }, [viewData]);
 
     // Fetch Reviews
     const fetchReviews = async () => {
@@ -500,6 +509,7 @@ const Visa = () => {
         formData.append("salaryAmount", salaryAmount || 0);
         formData.append("member", memberName);
         formData.append("applicantType", applicantType);
+        formData.append("status", status);
 
         Object.entries(files).forEach(([key, file]) => {
             if (file) formData.append(key, file);
@@ -688,6 +698,7 @@ const Visa = () => {
                                             <th>Sales Person</th>
                                             <th>Date</th>
                                             <th>C.Picture</th>
+                                            <th>Status</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -715,6 +726,7 @@ const Visa = () => {
                                                             />
                                                         )}
                                                     </td>
+                                                    <td>{review.status}</td>
                                                     <td>
                                                         <button className="btn btn-info btn-sm me-2" onClick={() => viewVisa(review.id)}>
                                                             <i className="bi bi-eye"></i>
@@ -981,6 +993,36 @@ const Visa = () => {
                                                 Business Owner
                                             </label>
                                         </div>
+
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Status</label>
+
+                                            <div className="position-relative">
+                                                <select
+                                                    className="form-control pe-5"
+                                                    value={status}
+                                                    onChange={(e) => setStatus(e.target.value)}
+                                                >
+                                                    <option value="Pending">Pending</option>
+                                                    <option value="Processing">Processing</option>
+                                                    <option value="Complete">Complete</option>
+                                                </select>
+
+                                                {/* Dropdown Arrow Icon */}
+                                                <span
+                                                    style={{
+                                                        position: "absolute",
+                                                        right: "10px",
+                                                        top: "50%",
+                                                        transform: "translateY(-50%)",
+                                                        pointerEvents: "none"
+                                                    }}
+                                                >
+                                                    ▼
+                                                </span>
+                                            </div>
+                                        </div>
+
                                     </div>
 
 

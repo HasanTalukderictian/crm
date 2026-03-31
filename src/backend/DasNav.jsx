@@ -9,7 +9,7 @@ const DashNav = () => {
     const [companyName, setCompanyName] = useState('Gazi Builders');
     const [logo, setLogo] = useState('https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
 
-    
+
 
     const [yourName, setYourName] = useState('');
 
@@ -21,10 +21,14 @@ const DashNav = () => {
 
     const [notifications, setNotifications] = useState([]);
 
+    const [headerId, setHeaderId] = useState(null);
+
+    console.log("Header ID:", headerId);
+
 
     const fetchNotifications = async () => {
         try {
-           const token = localStorage.getItem("authToken");// যদি auth token থাকে
+            const token = localStorage.getItem("authToken");// যদি auth token থাকে
 
             const res = await fetch(`${API_BASE}/notifications`, {
                 headers: {
@@ -45,102 +49,116 @@ const DashNav = () => {
 
 
     const fetchUser = async () => {
-    try {
-        const token = localStorage.getItem("authToken");
+        try {
+            const token = localStorage.getItem("authToken");
 
-        const res = await fetch(`${API_BASE}/me`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json"
+            const res = await fetch(`${API_BASE}/me`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/json"
+                }
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.status) {
+                setYourName(data.data.name);
+
+                // optional: localStorage update
+                localStorage.setItem("userName", data.data.name);
             }
-        });
 
-        const data = await res.json();
-
-        if (res.ok && data.status) {
-            setYourName(data.data.name);
-
-            // optional: localStorage update
-            localStorage.setItem("userName", data.data.name);
+        } catch (error) {
+            console.error("User fetch error:", error);
         }
+    };
 
-    } catch (error) {
-        console.error("User fetch error:", error);
-    }
-};
 
-  
 
     useEffect(() => {
-    fetchNotifications();
-    fetchUser()
-}, []);
+        fetchNotifications();
+        fetchUser()
+    }, []);
 
 
-const handleNotificationClick = async () => {
-    const token = localStorage.getItem("authToken");
+    const handleNotificationClick = async () => {
+        const token = localStorage.getItem("authToken");
 
-    try {
-        const res = await fetch(`${API_BASE}/notifications`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
-            },
-        });
-
-        const data = await res.json();
-
-        if (data.status) {
-            const notis = data.data || [];
-
-            setNotifications(notis);
-
-            // 👉 unread notifications
-            const unread = notis.filter(n => !n.is_read);
-
-            // 👉 show messages
-            unread.forEach(n => alert(n.message));
-
-            // 👉 mark all as read (optional best practice)
-            await fetch(`${API_BASE}/notifications/read-all`, {
-                method: "POST",
+        try {
+            const res = await fetch(`${API_BASE}/notifications`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: "application/json",
                 },
             });
 
-            // 👉 update UI instantly
-            setNotifications(prev =>
-                prev.map(n => ({ ...n, is_read: true }))
-            );
-        }
+            const data = await res.json();
 
-    } catch (error) {
-        console.error(error);
-    }
-};
+            if (data.status) {
+                const notis = data.data || [];
+
+                setNotifications(notis);
+
+                // 👉 unread notifications
+                const unread = notis.filter(n => !n.is_read);
+
+                // 👉 show messages
+                unread.forEach(n => alert(n.message));
+
+                // 👉 mark all as read (optional best practice)
+                await fetch(`${API_BASE}/notifications/read-all`, {
+                    method: "POST",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "application/json",
+                    },
+                });
+
+                // 👉 update UI instantly
+                setNotifications(prev =>
+                    prev.map(n => ({ ...n, is_read: true }))
+                );
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     // Fetch company info
     const fetchCompanyInfo = async () => {
-        try {
-            const response = await fetch(`${API_BASE}/get-header`);
-            const data = await response.json();
+    try {
+        const response = await fetch(`${API_BASE}/get-header`);
+        const data = await response.json();
 
-            if (response.ok && data.status && data.data.length > 0) {
-                const header = data.data[0];
+        console.log("API Response:", data);
 
-                setCompanyName(header.company_name || 'Gazi Builders');
+        const header = Array.isArray(data.data) ? data.data[0] : data.data;
 
-                // API থেকে full URL already আছে, তাই সরাসরি setLogo
-                setLogo(header.image || 'https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
+        if (header) {
+            setCompanyName(header.company_name || 'Gazi Builders');
+            setLogo(
+                header.image
+                    ? (header.image.startsWith('http')
+                        ? header.image
+                        : `${API_STORE}/${header.image}`)
+                    : 'https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png'
+            );
 
-                setFormCompanyName(header.company_name);
-            }
-        } catch (err) {
-            console.error("Failed to fetch company info:", err);
+            setFormCompanyName(header.company_name);
+            setHeaderId(header.id);
+
+            console.log("Header ID set:", header.id);
+        } else {
+            console.warn("No header found");
         }
-    };
+
+    } catch (err) {
+        console.error("Failed to fetch company info:", err);
+    }
+};
+
+
     useEffect(() => {
         fetchCompanyInfo();
     }, []);
@@ -199,39 +217,54 @@ const handleNotificationClick = async () => {
         }
     }, []);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData();
-        formData.append('company_name', formCompanyName);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        if (formImage instanceof File) {
-            const optimizedBlob = await optimizeImage(formImage);
-            const optimizedFile = new File([optimizedBlob], formImage.name, { type: 'image/jpeg' });
-            formData.append('image', optimizedFile);
+    const token = localStorage.getItem("authToken");
+
+    const formData = new FormData();
+    formData.append('company_name', formCompanyName);
+
+    if (formImage instanceof File) {
+        const optimizedBlob = await optimizeImage(formImage);
+        const optimizedFile = new File([optimizedBlob], formImage.name, { type: 'image/jpeg' });
+        formData.append('image', optimizedFile);
+    }
+
+    // 👉 Decide create or update
+    let url = `${API_BASE}/add-header`;
+    let method = "POST";
+
+    if (headerId) {
+        url = `${API_BASE}/edit-userInfo/${headerId}`;
+        formData.append('_method', 'POST'); // Laravel convention
+    }
+
+    try {
+        const response = await fetch(url, {
+            method: "POST", // always POST for FormData
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json"
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.status) {
+            alert(data.message || 'Saved successfully');
+            setShowModal(false);
+            fetchCompanyInfo(); // refresh
+        } else {
+            alert('Failed: ' + (data.message || 'Error'));
         }
 
-        try {
-            const response = await fetch(`${API_BASE}/add-header`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.status) {
-                alert(data.message || 'Company info saved!');
-                setShowModal(false);
-                fetchCompanyInfo();
-                setFormImage(null);
-            } else {
-                console.error('Error response:', data);
-                alert('Failed to save: ' + (data.message || 'Check console'));
-            }
-        } catch (error) {
-            console.error('Fetch error:', error);
-            alert('An error occurred while saving the form.');
-        }
-    };
+    } catch (error) {
+        console.error(error);
+        alert('Request failed');
+    }
+};
 
     return (
         <>

@@ -618,7 +618,7 @@ const Target = () => {
                                             />
                                         </div>
 
-                                        <button className="btn btn-primary">Send</button>
+                                        <button className="btn btn-success">Send</button>
 
                                     </form>
                                 </div>
