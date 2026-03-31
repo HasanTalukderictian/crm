@@ -40,7 +40,7 @@ const Sidebar = () => {
   // Sidebar links
   const links = [
     { to: "/admin-home", icon: "bi-speedometer2", label: "Dashboard", roles: ["admin", "user"] },
-    { to: "/admin-visa", icon: "bi-speedometer2", label: "Visa Management", roles: ["admin", "user"] },
+    { to: "/admin-visa", icon: "bi bi-passport", label: "Visa Management", roles: ["admin", "user"] },
     { to: "/admin-users", icon: "bi-people", label: "User Settings", roles: ["admin"] },
     { to: "/admin-team", icon: "bi-person", label: "Team", roles: ["admin", "user"] },
     { to: "/admin-depart", icon: "bi-diagram-3", label: "Department", roles: ["admin", "user"] },

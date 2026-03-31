@@ -143,25 +143,36 @@ const Dashboard = () => {
 
 
 
+    const [summaryMonth, setSummaryMonth] = useState({});
+
+    const fetchMonthlySummary = async () => {
+        const token = localStorage.getItem("authToken");
+
+        const res = await fetch(`${API_BASE}/monthly-summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const json = await res.json();
+
+        if (json.status) {
+            setSummaryMonth(json.data);
+        }
+    };
+
+
+
 
     useEffect(() => {
         fetchData();
         fetchMonthlySales();
         fetchMonthlyProperties();
         fetchTopUsers();
-        fetchSummary(); // 👈 add this
+        fetchSummary();
+        fetchMonthlySummary();// 👈 add this
     }, []);
 
     // 🔵 Doughnut (Leads)
-    const doughnutData = {
-        labels: ["Orders", "Products", "Users"],
-        datasets: [
-            {
-                data: [data.orders, data.products, data.users],
-                backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc"]
-            }
-        ]
-    };
+
 
     // 🔴 Line (Sales)
     const lineData = {
@@ -205,6 +216,32 @@ const Dashboard = () => {
     };
 
 
+    const pieSummaryData = {
+        labels: ["Target", "Achieved", "Remaining"],
+        datasets: [
+            {
+                data: [
+                    summaryMonth.total_target,
+                    summaryMonth.total_achieved,
+                    summaryMonth.total_remaining
+                ],
+                backgroundColor: ["#4e73df", "#1cc88a", "#f6c23e"]
+            }
+        ]
+    };
+
+
+    const pieOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom"
+            }
+        }
+    };
+
+
     // 🟢 Bar (Properties)
     const barData = {
         labels: [
@@ -226,42 +263,87 @@ const Dashboard = () => {
             {/* TOP ROW */}
             <div className="row g-4 align-items-stretch">
 
-                {/* Welcome Card */}
-                <div className="col-lg-4">
-                    <div className="card p-4 shadow-sm text-center">
-                        <p>You have {summary.today_achieved} member achieved today</p>
+                <div className="row g-4 align-items-stretch">
 
-                        <h5 className="mt-3">
-                            {summary.total_achieved} Total Achieved
-                        </h5>
+                    {/* Welcome Card */}
+                    <div className="col-lg-4 d-flex">
+                        <div className="card p-4 shadow-sm text-center w-100 h-100">
 
-                        <p className="mt-2 text-muted">
-                            This month: {summary.monthly_achieved}
-                        </p>
-                    </div>
-                </div>
+                            <p>
+                                You have <strong>{summary.today_achieved}</strong> member achieved today
+                            </p>
 
-                {/* Leads */}
-                <div className="col-lg-4">
-                    <div className="card p-3 shadow-sm text-center">
-                        <h5>{data.orders}</h5>
-                        <p>New Leads</p>
-                        <div style={{ height: "150px" }}>
-                            <Doughnut data={doughnutData} />
+                            <h5 className="mt-3">
+                                {summary.total_achieved} Total Achieved
+                            </h5>
+
+                            <div className="d-flex justify-content-center align-items-center mt-2 text-muted gap-3">
+                                <div
+                                    style={{
+                                        backgroundColor: "green",
+                                        padding: "4px 6px",
+                                        borderRadius: "6px",
+                                        color: "white",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}
+                                >
+                                    <i className="bi bi-graph-up-arrow"></i>
+                                </div>
+
+                                <span>
+                                    This month: {summary.monthly_achieved}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Sales */}
-                <div className="col-lg-4">
-                    <div className="card p-3 shadow-sm text-center">
-                        <h5>{data.products}</h5>
-                        <p>Total Visa Sales </p>
-                        <div style={{ height: "150px" }}>
-                            <Line data={lineData} options={lineOptions} />
+                    {/* Leads */}
+                    <div className="col-lg-4 d-flex">
+                        <div className="card p-3 shadow-sm text-center w-100 h-100">
+
+                            <h5>{summaryMonth.total_achieved}</h5>
+                            <p>Monthly Performance</p>
+
+                            <div style={{ height: "150px", width: "150px", margin: "0 auto" }}>
+                                <Doughnut data={pieSummaryData} options={pieOptions} />
+                            </div>
+
                         </div>
                     </div>
+
+                    {/* Sales */}
+                    <div className="col-lg-4 d-flex">
+                        <div className="card p-3 shadow-sm text-center w-100 h-100">
+
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <p className="mb-0 fw-semibold">Total Visa Sales</p>
+
+                                <div
+                                    style={{
+                                        backgroundColor: "green",
+                                        padding: "6px 8px",
+                                        borderRadius: "6px",
+                                        color: "white",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}
+                                >
+                                    <i className="bi bi-house-fill"></i>
+                                </div>
+                            </div>
+
+                            <div style={{ height: "150px" }}>
+                                <Line data={lineData} options={lineOptions} />
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
+
             </div>
 
 
@@ -271,7 +353,27 @@ const Dashboard = () => {
                 {/* LEFT: Big Chart */}
                 <div className="col-lg-8 d-flex">
                     <div className="card p-4 shadow-sm w-100 h-100">
-                        <h5>Total Member</h5>
+
+                        {/* Header */}
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <h5 className="mb-0">Total Member</h5>
+
+                            <div
+                                style={{
+                                    backgroundColor: "green",
+                                    padding: "8px 10px",
+                                    borderRadius: "8px",
+                                    color: "white",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <i className="bi bi-people-fill"></i>
+                            </div>
+                        </div>
+
+                        {/* Chart */}
                         <div style={{ height: "100%" }}>
                             <Bar data={barData} />
                         </div>
@@ -283,8 +385,27 @@ const Dashboard = () => {
 
                     {/* Top Performer */}
                     <div className="card p-4 shadow-sm flex-fill">
-                        <h5>Top Performer</h5>
 
+                        {/* Header with icon */}
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h5 className="mb-0">Top Performer</h5>
+
+                            <div
+                                style={{
+                                    backgroundColor: "#ffc107", // yellow
+                                    padding: "8px 10px",
+                                    borderRadius: "8px",
+                                    color: "#000",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <i className="bi bi-trophy-fill"></i>
+                            </div>
+                        </div>
+
+                        {/* List */}
                         <ul className="list-group mt-3">
                             {topUsers.length > 0 ? (
                                 topUsers.map((user, index) => (

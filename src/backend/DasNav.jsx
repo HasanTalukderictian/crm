@@ -8,8 +8,10 @@ const DashNav = () => {
     const [showModal, setShowModal] = useState(false);
     const [companyName, setCompanyName] = useState('Gazi Builders');
     const [logo, setLogo] = useState('https://i.ibb.co.com/kgghmZfy/Flying-Bird-logo-design-template.png');
-    const [yourName, setYourName] = useState('');
 
+    
+
+    const [yourName, setYourName] = useState('');
 
     const [formCompanyName, setFormCompanyName] = useState('');
     const [formImage, setFormImage] = useState(null);
@@ -41,10 +43,37 @@ const DashNav = () => {
         }
     };
 
+
+    const fetchUser = async () => {
+    try {
+        const token = localStorage.getItem("authToken");
+
+        const res = await fetch(`${API_BASE}/me`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json"
+            }
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.status) {
+            setYourName(data.data.name);
+
+            // optional: localStorage update
+            localStorage.setItem("userName", data.data.name);
+        }
+
+    } catch (error) {
+        console.error("User fetch error:", error);
+    }
+};
+
   
 
     useEffect(() => {
     fetchNotifications();
+    fetchUser()
 }, []);
 
 
