@@ -291,7 +291,7 @@ const Dashboard = () => {
 
     return (
         <Layout>
-        <div className="container mt-4">
+        <div className="dashboard-wrapper mt-4">
 
             {/* TOP ROW */}
             <div className="row g-4 align-items-stretch">

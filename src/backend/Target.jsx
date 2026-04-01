@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import '../assets/css/target.scss'
 
-import { Pie } from "react-chartjs-2";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+// import { Pie } from "react-chartjs-2";
+// import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+import Chart from "chart.js/auto";
+import { Pie } from "react-chartjs-2";
+
+// ChartJS.register(ArcElement, Tooltip, Legend);
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
@@ -72,40 +75,52 @@ const Target = () => {
     };
 
     // ================= FETCH TARGETS =================
-   const fetchTargets = async () => {
-    try {
-        const token = localStorage.getItem("adminToken");
 
-        let url = `${API_BASE}/get-target?`;
 
-        if (filterYear) url += `year=${filterYear}&`;
-        if (filterMonth) url += `month=${filterMonth}&`;
-        if (filterUser) url += `user_id=${filterUser}`;
+    const fetchTargets = async () => {
+        try {
+            const token = localStorage.getItem("adminToken");
 
-        const response = await fetch(url, {
-            headers: {
-                "Accept": "application/json",
-                "Authorization": "Bearer " + token
+            let url = `${API_BASE}/get-target?`;
+
+            // ✅ Admin filter
+            if (userRole === "admin") {
+                if (filterYear) url += `year=${filterYear}&`;
+                if (filterMonth) url += `month=${filterMonth}&`;
+                if (filterUser) url += `user_id=${filterUser}`;
             }
-        });
 
-        const data = await response.json();
+            // ✅ Non-admin always force their own data
+            if (userRole !== "admin") {
+                url += `user_id=${userId}`;
+                if (filterYear) url += `&year=${filterYear}`;
+                if (filterMonth) url += `&month=${filterMonth}`;
+            }
 
-        if (response.ok && data.data) {
-            setTargets(data.data.data || []);
+            const response = await fetch(url, {
+                headers: {
+                    "Accept": "application/json",
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setTargets(data.data?.data || data.data || []);
+            }
+
+        } catch (error) {
+            console.error(error);
         }
+    };
 
-    } catch (error) {
-        console.error(error);
-    }
-};
 
-   
 
     useEffect(() => {
-          fetchUsers();
-    fetchTargets();
-}, [filterYear, filterMonth, filterUser]);
+        fetchUsers();
+        fetchTargets();
+    }, [filterYear, filterMonth, filterUser]);
 
     // ================= FILTER LOGIC =================
     const applyFilters = () => {
@@ -147,13 +162,12 @@ const Target = () => {
     const totalPages = Math.ceil(filteredUsersList.length / usersPerPage);
 
     // ================= TARGET HELPERS =================
- const getUserTarget = (userId) => {
-    return targets.find(t =>
-        t.user_id === userId &&
-        (filterYear ? t.year == filterYear : true) &&
-        (filterMonth ? t.month == filterMonth : true)
-    );
-};
+
+
+    const getUserTarget = (uid) => {
+        return targets.find(t => t.user_id === uid);
+    };
+
 
     const getMonthName = (month) => {
         const months = [
@@ -300,23 +314,37 @@ const Target = () => {
 
 
     // ================= CHART DATA =================
-    const userTarget = targets.find(t => t.user_id === userId);
+    // ================= CHART DATA =================
+
+    // ✅ current selected filter অনুযায়ী target বের করো
+    const userTarget = targets.find(t => {
+        return (
+            t.user_id === userId &&
+            (filterYear ? t.year == filterYear : true) &&
+            (filterMonth ? t.month == filterMonth : true)
+        );
+    });
 
     let chartData = null;
 
     if (userTarget) {
-        chartData = {
-            labels: ["Achieved", "Remaining"],
-            datasets: [
-                {
-                    data: [userTarget.achieved, userTarget.remaining],
-                    backgroundColor: ["#28a745", "#dc3545"],
-                    borderWidth: 1,
-                },
-            ],
-        };
-    }
+        const achieved = Number(userTarget.achieved) || 0;
+        const remaining = Number(userTarget.remaining) || 0;
 
+        // ❗ IMPORTANT: chart render only if any value > 0
+        if (achieved > 0 || remaining > 0) {
+            chartData = {
+                labels: ["Achieved", "Remaining"],
+                datasets: [
+                    {
+                        data: [achieved, remaining],
+                        backgroundColor: ["#28a745", "#dc3545"],
+                        borderWidth: 1,
+                    },
+                ],
+            };
+        }
+    }
     // ================= STATUS =================
     const getProgressStatus = (progress) => {
         if (progress <= 30) return { label: "Poor", color: "#dc3545" };
@@ -571,13 +599,12 @@ const Target = () => {
                                 <div className="card p-3 shadow-sm">
                                     <h5 className="text-center mb-3">My Progress</h5>
 
-                                    {userTarget && chartData ? (
+                                    {chartData ? (
                                         <>
                                             {/* PIE CHART */}
-                                            <div style={{ maxWidth: "300px", margin: "0 auto" }}>
+                                            <div style={{ width: "300px", height: "300px", margin: "0 auto" }}>
                                                 <Pie data={chartData} />
                                             </div>
-
                                             {/* INFO */}
                                             <div className="mt-4">
 

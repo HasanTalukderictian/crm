@@ -22,9 +22,9 @@ const Visa = () => {
     const userRole = localStorage.getItem("userRole"); // "admin" or "user"
     const userId = Number(localStorage.getItem("userId"));
 
-    console.log("Logged-in User Role:", userRole);
-    console.log("Logged-in User ID:", userId);
-    console.log("All Reviews Data:", reviews);
+    // console.log("Logged-in User Role:", userRole);
+    // console.log("Logged-in User ID:", userId);
+    // console.log("All Reviews Data:", reviews);
 
     // Text / number fields
     const [name, setName] = useState("");
@@ -50,6 +50,8 @@ const Visa = () => {
     const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [note, setNote] = useState("");
 
 
 
@@ -90,6 +92,7 @@ const Visa = () => {
         const today = new Date().toISOString().split("T")[0];
         setDate(today);
     }, []);
+
 
     // Fetch Team Members
     const [teamMembers, setTeamMembers] = useState([]);
@@ -207,6 +210,8 @@ const Visa = () => {
 
     const [status, setStatus] = useState("Pending");
 
+    const [remainderDays, setRemainderDays] = useState("");
+
 
     // Fetch Countries
     const [countries, setCountries] = useState([]);
@@ -317,6 +322,20 @@ const Visa = () => {
         }
     };
 
+
+    const calculateRemainingDays = (data) => {
+        if (!data?.date || !data?.remainder_days) return "N/A";
+
+        const passingDate = new Date(data.date);
+        const today = new Date();
+
+        const diffTime = today - passingDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        const remaining = data.remainder_days - diffDays;
+
+        return remaining > 0 ? remaining + " days left" : "Expired";
+    };
 
     const editVisa = async (id) => {
         try {
@@ -491,8 +510,8 @@ const Visa = () => {
             return;
         }
 
-        if (passport.length < 6 || passport.length > 9) {
-            toast.error("Passport Number must be between 6 and 9 digits");
+        if (passport.length < 6 || passport.length > 10) {
+            toast.error("Passport Number must be between 6 and 10 digits");
             return;
         }
 
@@ -510,6 +529,8 @@ const Visa = () => {
         formData.append("member", memberName);
         formData.append("applicantType", applicantType);
         formData.append("status", status);
+        formData.append("remainder_days", remainderDays);
+        formData.append("note", note);
 
         Object.entries(files).forEach(([key, file]) => {
             if (file) formData.append(key, file);
@@ -867,7 +888,7 @@ const Visa = () => {
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Passport Number</label>
                                         <input
-                                            type="number"
+                                            type="text"
                                             className="form-control"
                                             value={passport}
                                             onChange={(e) => {
@@ -994,12 +1015,16 @@ const Visa = () => {
                                             </label>
                                         </div>
 
-                                        <div className="col-md-6 mb-3">
-                                            <label className="form-label">Status</label>
 
-                                            <div className="position-relative">
+
+                                        <div className="row">
+
+                                            {/* STATUS */}
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Status</label>
+
                                                 <select
-                                                    className="form-control pe-5"
+                                                    className="form-control"
                                                     value={status}
                                                     onChange={(e) => setStatus(e.target.value)}
                                                 >
@@ -1007,21 +1032,40 @@ const Visa = () => {
                                                     <option value="Processing">Processing</option>
                                                     <option value="Complete">Complete</option>
                                                 </select>
-
-                                                {/* Dropdown Arrow Icon */}
-                                                <span
-                                                    style={{
-                                                        position: "absolute",
-                                                        right: "10px",
-                                                        top: "50%",
-                                                        transform: "translateY(-50%)",
-                                                        pointerEvents: "none"
-                                                    }}
-                                                >
-                                                    ▼
-                                                </span>
                                             </div>
+
+                                            {/* NOTE → ONLY Pending & Processing */}
+                                            {(status === "Pending" || status === "Processing") && (
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Note</label>
+                                                    <textarea
+                                                        className="form-control"
+                                                        rows="2"
+                                                        value={note}
+                                                        onChange={(e) => setNote(e.target.value)}
+                                                        placeholder="Write note..."
+                                                    />
+                                                </div>
+                                            )}
+
                                         </div>
+
+
+
+                                        {/* REMAINDER DAYS FIELD */}
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label">Remainder Days</label>
+                                            <input
+                                                type="number"
+                                                className="form-control"
+                                                value={remainderDays}
+                                                onChange={(e) => setRemainderDays(e.target.value)}
+                                                placeholder="Enter remaining days"
+                                                min="0"
+                                            />
+                                        </div>
+
+
 
                                     </div>
 
@@ -1376,6 +1420,34 @@ const Visa = () => {
                                         <input
                                             className="form-control"
                                             value={viewData.member || "N/A"}
+                                            readOnly
+                                        />
+                                    </div>
+
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Status</label>
+                                        <input
+                                            className="form-control"
+                                            value={viewData.status || "N/A"}
+                                            readOnly
+                                        />
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Note</label>
+                                        <input
+                                            className="form-control"
+                                            value={viewData.note || "N/A"}
+                                            readOnly
+                                        />
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Remaining Days</label>
+                                        <input
+                                            className="form-control"
+                                            value={calculateRemainingDays(viewData)}
                                             readOnly
                                         />
                                     </div>
