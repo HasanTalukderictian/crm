@@ -13,6 +13,7 @@ import {
 } from "chart.js";
 import { Doughnut, Bar, Line } from "react-chartjs-2";
 import "../../src/assets/css/dashboard.scss";
+import Layout from "../components/Layout";
 
 ChartJS.register(
     ArcElement,
@@ -114,7 +115,12 @@ const Dashboard = () => {
         const json = await res.json();
 
         if (json.status) {
-            setTopUsers(json.data);
+
+            const currentMonth = new Date().getMonth() + 1;
+
+            const monthData = json.data.find(item => item.month === currentMonth);
+
+            setTopUsers(monthData?.top_users || []);
         }
     };
 
@@ -122,6 +128,8 @@ const Dashboard = () => {
     const [summary, setSummary] = useState({
         today_achieved: 0,
         total_achieved: 0,
+        total_target: 0,
+        total_remaining: 0,
         monthly_achieved: 0
     });
 
@@ -161,6 +169,29 @@ const Dashboard = () => {
 
 
 
+    const [visaStatus, setVisaStatus] = useState({
+        pending: 0,
+        processing: 0,
+        complete: 0,
+        total: 0
+    });
+
+
+    const fetchVisaStatus = async () => {
+        const token = localStorage.getItem("authToken");
+
+        const res = await fetch(`${API_BASE}/monthly-visa-status-summary`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const json = await res.json();
+
+        if (json.status) {
+            setVisaStatus(json.data);
+        }
+    };
+
+
 
     useEffect(() => {
         fetchData();
@@ -168,7 +199,8 @@ const Dashboard = () => {
         fetchMonthlyProperties();
         fetchTopUsers();
         fetchSummary();
-        fetchMonthlySummary();// 👈 add this
+        fetchMonthlySummary();
+        fetchVisaStatus();// 👈 add this
     }, []);
 
     // 🔵 Doughnut (Leads)
@@ -258,7 +290,8 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="dashboard-wrapper">
+        <Layout>
+        <div className="container mt-4">
 
             {/* TOP ROW */}
             <div className="row g-4 align-items-stretch">
@@ -303,9 +336,33 @@ const Dashboard = () => {
                     <div className="col-lg-4 d-flex">
                         <div className="card p-3 shadow-sm text-center w-100 h-100">
 
-                            <h5>{summaryMonth.total_achieved}</h5>
-                            <p>Monthly Performance</p>
+                            {/* Header with Icon */}
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <p className="mb-0 fw-semibold">Monthly Performance</p>
 
+                                <div
+                                    style={{
+                                        backgroundColor: "green",
+                                        padding: "6px 8px",
+                                        borderRadius: "8px",
+                                        color: "white",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}
+                                >
+                                    <i className="bi bi-activity"></i>
+                                </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <p className="m-0">Target: {summaryMonth.total_target}</p>
+                                <p className="m-0">Achieve: {summaryMonth.total_achieved}</p>
+                                <p className="m-0">Remaining: {summaryMonth.total_remaining}</p>
+                            </div>
+
+                            {/* Chart */}
                             <div style={{ height: "150px", width: "150px", margin: "0 auto" }}>
                                 <Doughnut data={pieSummaryData} options={pieOptions} />
                             </div>
@@ -356,7 +413,7 @@ const Dashboard = () => {
 
                         {/* Header */}
                         <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="mb-0">Total Member</h5>
+                            <h5 className="mb-0">Total Member Collection</h5>
 
                             <div
                                 style={{
@@ -432,27 +489,47 @@ const Dashboard = () => {
 
 
                     {/* Status Box */}
+
+
                     <div className="card p-4 shadow-sm flex-fill">
-                        <h5>Status</h5>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                            <h5 className="mb-0">Monthly Visa Status</h5>
+
+                            <div
+                                style={{
+                                    backgroundColor: "green",
+                                    padding: "6px 8px",
+                                    borderRadius: "8px",
+                                    color: "white",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center"
+                                }}
+                            >
+                                <i className="bi bi-activity"></i>
+                            </div>
+                        </div>
 
                         <div className="d-flex justify-content-between mt-3">
-                            <span>Products</span>
-                            <b>{data.products}</b>
+                            <span style={{ color: "#ffc107", fontWeight: "500" }}>Pending</span>
+                            <b style={{ color: "#ffc107" }}>{visaStatus.pending}</b>
                         </div>
 
-                        <div className="d-flex justify-content-between mt-2">
-                            <span>Orders</span>
-                            <b>{data.orders}</b>
+                      <div className="d-flex justify-content-between mt-3">
+                            <span style={{ color: "#12b0d8", fontWeight: "500" }}>Processing</span>
+                            <b style={{ color: "#12b0d8" }}>{visaStatus.processing}</b>
                         </div>
-
-                        <div className="d-flex justify-content-between mt-2">
-                            <span>Users</span>
-                            <b>{data.users}</b>
+                        
+                     
+                         <div className="d-flex justify-content-between mt-3">
+                            <span style={{ color: "#1f4b03", fontWeight: "500" }}>Complete</span>
+                            <b style={{ color: "#1f4b03" }}>{visaStatus.complete}</b>
                         </div>
+                        <hr />
 
-                        <div className="d-flex justify-content-between mt-2">
-                            <span>Reviews</span>
-                            <b>{data.review}</b>
+                        <div className="d-flex justify-content-between">
+                            <span>Total</span>
+                            <b>{visaStatus.total}</b>
                         </div>
                     </div>
 
@@ -464,7 +541,10 @@ const Dashboard = () => {
             </div>
 
         </div>
+        </Layout>
+        
     );
 };
+
 
 export default Dashboard;

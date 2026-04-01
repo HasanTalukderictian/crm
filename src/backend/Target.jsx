@@ -42,6 +42,8 @@ const Target = () => {
     const [filterMonth, setFilterMonth] = useState("");
     const [filterUser, setFilterUser] = useState("");
 
+    const [selectedUserId, setSelectedUserId] = useState("");
+
     // ✅ PAGINATION
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
@@ -70,32 +72,40 @@ const Target = () => {
     };
 
     // ================= FETCH TARGETS =================
-    const fetchTargets = async () => {
-        try {
-            const token = localStorage.getItem("adminToken");
+   const fetchTargets = async () => {
+    try {
+        const token = localStorage.getItem("adminToken");
 
-            const response = await fetch(`${API_BASE}/get-target`, {
-                headers: {
-                    "Accept": "application/json",
-                    "Authorization": "Bearer " + token
-                }
-            });
+        let url = `${API_BASE}/get-target?`;
 
-            const data = await response.json();
+        if (filterYear) url += `year=${filterYear}&`;
+        if (filterMonth) url += `month=${filterMonth}&`;
+        if (filterUser) url += `user_id=${filterUser}`;
 
-            if (response.ok && data.data) {
-                setTargets(data.data.data || []);
+        const response = await fetch(url, {
+            headers: {
+                "Accept": "application/json",
+                "Authorization": "Bearer " + token
             }
+        });
 
-        } catch (error) {
-            console.error(error);
+        const data = await response.json();
+
+        if (response.ok && data.data) {
+            setTargets(data.data.data || []);
         }
-    };
+
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+   
 
     useEffect(() => {
-        fetchUsers();
-        fetchTargets();
-    }, []);
+          fetchUsers();
+    fetchTargets();
+}, [filterYear, filterMonth, filterUser]);
 
     // ================= FILTER LOGIC =================
     const applyFilters = () => {
@@ -137,9 +147,13 @@ const Target = () => {
     const totalPages = Math.ceil(filteredUsersList.length / usersPerPage);
 
     // ================= TARGET HELPERS =================
-    const getUserTarget = (userId) => {
-        return targets.find(t => t.user_id === userId);
-    };
+ const getUserTarget = (userId) => {
+    return targets.find(t =>
+        t.user_id === userId &&
+        (filterYear ? t.year == filterYear : true) &&
+        (filterMonth ? t.month == filterMonth : true)
+    );
+};
 
     const getMonthName = (month) => {
         const months = [
@@ -151,23 +165,32 @@ const Target = () => {
     };
 
     // ================= MODAL =================
+
     const openModal = (user) => {
         setSelectedUser(user);
-
-        const userTarget = getUserTarget(user.id);
 
         const currentDate = new Date();
         setYear(currentDate.getFullYear());
         setMonth(currentDate.getMonth() + 1);
 
-        if (userTarget) {
-            setMonthlyTarget(userTarget.target);
+        if (user) {
+            setSelectedUserId(user.id); // ✅ edit mode
+            const userTarget = getUserTarget(user.id);
+
+            if (userTarget) {
+                setMonthlyTarget(userTarget.target);
+            } else {
+                setMonthlyTarget("");
+            }
         } else {
+            // ✅ NEW TARGET
+            setSelectedUserId("");
             setMonthlyTarget("");
         }
 
         setTargetModal(true);
     };
+
 
     const closeModal = () => {
         setTargetModal(false);
@@ -231,7 +254,15 @@ const Target = () => {
 
         try {
             const token = localStorage.getItem("adminToken");
-            const userTarget = getUserTarget(selectedUser.id);
+
+            const finalUserId = selectedUser ? selectedUser.id : selectedUserId;
+
+            if (!finalUserId) {
+                toast.error("Please select user ❌");
+                return;
+            }
+
+            const userTarget = selectedUser ? getUserTarget(selectedUser.id) : null;
 
             const url = userTarget
                 ? `${API_BASE}/targets/${userTarget.id}`
@@ -244,7 +275,7 @@ const Target = () => {
                     "Authorization": "Bearer " + token
                 },
                 body: JSON.stringify({
-                    user_id: selectedUser.id,
+                    user_id: finalUserId,
                     target: monthlyTarget,
                     year: year,
                     month: month
@@ -265,7 +296,6 @@ const Target = () => {
             console.error(err);
         }
     };
-
 
 
 
@@ -309,7 +339,16 @@ const Target = () => {
 
                         /* ================= ADMIN VIEW ================= */
                         <>
-                            <h2 className="mb-3">Target Management</h2>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h2>Target Management</h2>
+
+                                <button
+                                    className="btn btn-success"
+                                    onClick={() => openModal(null)} // 🔥 IMPORTANT
+                                >
+                                    + Set New Target
+                                </button>
+                            </div>
 
                             {/* FILTERS */}
                             <div className="row mb-3">
@@ -390,10 +429,10 @@ const Target = () => {
 
                                                 <td>
                                                     <button
-                                                        className="btn btn-success btn-sm me-2"
+                                                        className="btn btn-primary btn-sm me-2"
                                                         onClick={() => openModal(user)}
                                                     >
-                                                        {userTarget ? "Edit" : "Set"}
+                                                        Edit
                                                     </button>
 
                                                     <button
@@ -637,12 +676,36 @@ const Target = () => {
                             <div className="modal-content">
 
                                 <div className="modal-header">
-                                    <h5>Set Target for {selectedUser?.name}</h5>
+                                    <h5>
+                                        {selectedUser
+                                            ? `Edit Target for ${selectedUser?.name}`
+                                            : "Set New Target"}
+                                    </h5>
                                     <button className="btn-close" onClick={closeModal}></button>
                                 </div>
 
                                 <div className="modal-body">
                                     <form onSubmit={handleSetTarget}>
+
+                                        {/* USER SELECT (ONLY FOR NEW TARGET) */}
+                                        {!selectedUser && (
+                                            <div className="mb-3">
+                                                <label>User</label>
+                                                <select
+                                                    className="form-control"
+                                                    value={selectedUserId}
+                                                    onChange={(e) => setSelectedUserId(e.target.value)}
+                                                    required
+                                                >
+                                                    <option value="">Select User</option>
+                                                    {users.map(u => (
+                                                        <option key={u.id} value={u.id}>
+                                                            {u.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
 
                                         <div className="mb-3">
                                             <label>Year</label>

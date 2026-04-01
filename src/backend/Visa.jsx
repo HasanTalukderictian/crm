@@ -194,7 +194,7 @@ const Visa = () => {
 
 
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const itemsPerPage = 15;
 
     // Pagination logic: current page এর items slice করা
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -448,7 +448,7 @@ const Visa = () => {
         setSalesPerson("");
         setApplicantType("");
 
-        setDate(today);   // 🔥 এখানে fix
+        setDate(today);   // এখানে fix
 
         setAssetValuation("");
         setSalaryAmount("");
