@@ -62,6 +62,9 @@ const Visa = () => {
 
 
 
+
+
+
     // Files grouped in one state object
     const [files, setFiles] = useState({
         image: null,
@@ -84,6 +87,27 @@ const Visa = () => {
         renewalTradeLicense: null,
         memorandumLimited: null,
     });
+
+
+    // const [fileChecks, setFileChecks] = useState({});
+
+    const [fileChecks, setFileChecks] = useState({
+    bankCertificate: false,
+    nidFile: false,
+    assetValuation: false,
+    birthCertificate: false,
+    marriageCertificate: false,
+    nocLetter: false,
+    officeId: false,
+    salarySlips: false,
+    governmentOrder: false,
+    visitingCard: false,
+    salaryAmount: false,
+    companyBankStatement: false,
+    blankOfficePad: false,
+    renewalTradeLicense: false,
+    memorandumLimited: false,
+});
 
     const [preview, setPreview] = useState(null);
 
@@ -492,11 +516,29 @@ const Visa = () => {
     };
 
     // Handle file changes
-    const handleFileChange = (field, file) => {
-        setFiles({ ...files, [field]: file });
+    // const handleFileChange = (field, file) => {
+    //     setFiles({ ...files, [field]: file });
 
-        if (field === "image") setPreview(URL.createObjectURL(file));
+    //     if (field === "image") setPreview(URL.createObjectURL(file));
+    // };
+
+
+    const handleFileChange = (field, file) => {
+        setFiles((prev) => ({
+            ...prev,
+            [field]: file
+        }));
     };
+
+
+    const handleCheckChange = (field) => {
+        setFileChecks((prev) => ({
+            ...prev,
+            [field]: !prev[field]
+        }));
+    };
+
+
 
 
     const resetForm = () => {
@@ -550,6 +592,8 @@ const Visa = () => {
 
 
 
+    //Submit function 
+
     const submitReview = async () => {
 
         if (phone.length !== 11) {
@@ -578,6 +622,8 @@ const Visa = () => {
         formData.append("status", status);
         formData.append("remainder_days", remainderDays);
         formData.append("note", note);
+
+        formData.append("fileChecks", JSON.stringify(fileChecks));
 
         Object.entries(files).forEach(([key, file]) => {
             if (file) formData.append(key, file);
@@ -684,6 +730,13 @@ const Visa = () => {
             }
         }
     };
+
+
+
+
+
+
+
 
 
 
@@ -916,6 +969,8 @@ const Visa = () => {
                                         <h5 className="text-success border-bottom pb-2 mb-3">
                                             Customer Information
                                         </h5>
+
+
                                     </div>
 
                                     <div className="col-md-6 mb-3">
@@ -1085,13 +1140,13 @@ const Visa = () => {
                                                 >
                                                     <option value="Pending">Pending</option>
                                                     <option value="Processing">Processing</option>
-                                                      <option value="Complete">Complete</option>
+                                                    <option value="Complete">Complete</option>
                                                     <option value="Cancle">Cancle</option>
                                                 </select>
                                             </div>
 
                                             {/* NOTE → ONLY Pending & Processing */}
-                                            {(status === "Pending" || status === "Processing" || status ==="Cancle") && (
+                                            {(status === "Pending" || status === "Processing" || status === "Cancle") && (
                                                 <div className="col-md-6 mb-3">
                                                     <label className="form-label">Note</label>
                                                     <textarea
@@ -1155,8 +1210,18 @@ const Visa = () => {
                                         )}
                                     </div>
 
+
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Bank Certificate</label>
+
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.bankCertificate || false}
+                                                onChange={() => handleCheckChange("bankCertificate")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
                                         <input
                                             type="file"
                                             className="form-control"
@@ -1172,6 +1237,15 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">NID Copy</label>
+
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.nidFile || false}
+                                                onChange={() => handleCheckChange("nidFile")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
                                         <input
                                             type="file"
                                             className="form-control"
@@ -1186,6 +1260,14 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Asset Valuation</label>
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.assetValuation || false}
+                                                onChange={() => handleCheckChange("assetValuation")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
                                         <input
                                             type="number"
                                             className="form-control"
@@ -1196,6 +1278,14 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Birth Certificate</label>
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.birthCertificate || false}
+                                                onChange={() => handleCheckChange("birthCertificate")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
                                         <input
                                             type="file"
                                             className="form-control"
@@ -1211,6 +1301,14 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Marriage Certificate</label>
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.marriageCertificate || false}
+                                                onChange={() => handleCheckChange("marriageCertificate")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
                                         <input
                                             type="file"
                                             className="form-control"
@@ -1238,6 +1336,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">NOC Letter</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.nocLetter || false}
+                                                        onChange={() => handleCheckChange("nocLetter")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1252,6 +1358,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Office ID</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.officeId || false}
+                                                        onChange={() => handleCheckChange("officeId")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1266,6 +1380,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Salary Slips</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.salarySlips || false}
+                                                        onChange={() => handleCheckChange("salarySlips")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1280,6 +1402,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Government Order</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.governmentOrder || false}
+                                                        onChange={() => handleCheckChange("governmentOrder")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1294,6 +1424,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Visiting Card</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.visitingCard || false}
+                                                        onChange={() => handleCheckChange("visitingCard")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1308,6 +1446,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Salary Amount</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.salaryAmount || false}
+                                                        onChange={() => handleCheckChange("salaryAmount")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="number"
                                                     className="form-control"
@@ -1331,6 +1477,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Company Bank Statement</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.companyBankStatement || false}
+                                                        onChange={() => handleCheckChange("companyBankStatement")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1345,6 +1499,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Blank Office Pad</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.blankOfficePad || false}
+                                                        onChange={() => handleCheckChange("blankOfficePad")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1359,6 +1521,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Renewal Trade License</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.renewalTradeLicense || false}
+                                                        onChange={() => handleCheckChange("renewalTradeLicense")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1373,6 +1543,14 @@ const Visa = () => {
 
                                             <div className="col-md-6 mb-3">
                                                 <label className="form-label">Memorandum Limited</label>
+                                                <div className="d-flex align-items-center gap-2 mb-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={fileChecks.memorandumLimited || false}
+                                                        onChange={() => handleCheckChange("memorandumLimited")}
+                                                    />
+                                                    <small>Include in SMS</small>
+                                                </div>
                                                 <input
                                                     type="file"
                                                     className="form-control"
@@ -1565,46 +1743,46 @@ const Visa = () => {
 
 
             {showMsgModal && (
-    <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
-        <div className="modal-dialog modal-lg">
-            <div className="modal-content">
+                <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
 
-                <div className="modal-header">
-                    <h5 className="modal-title">Message History</h5>
-                    <button className="btn-close" onClick={() => setShowMsgModal(false)}></button>
-                </div>
-
-                <div className="modal-body" style={{ maxHeight: "400px", overflowY: "auto" }}>
-
-                    {loadingMsg ? (
-                        <p>Loading...</p>
-                    ) : messages.length > 0 ? (
-                        messages.map((msg, index) => (
-                            <div key={index} className="border-bottom mb-3 pb-2">
-                                <div className="d-flex justify-content-between">
-                                    <small className="text-muted">
-                                        {new Date(msg.created_at).toLocaleString()}
-                                    </small>
-                                    <span className="badge bg-secondary">{msg.type}</span>
-                                </div>
-
-                                <p className="mb-1">{msg.message}</p>
-
-                                <small className="text-muted">
-                                    Phone: {msg.phone}
-                                </small>
+                            <div className="modal-header">
+                                <h5 className="modal-title">Message History</h5>
+                                <button className="btn-close" onClick={() => setShowMsgModal(false)}></button>
                             </div>
-                        ))
-                    ) : (
-                        <p>No messages found</p>
-                    )}
 
+                            <div className="modal-body" style={{ maxHeight: "400px", overflowY: "auto" }}>
+
+                                {loadingMsg ? (
+                                    <p>Loading...</p>
+                                ) : messages.length > 0 ? (
+                                    messages.map((msg, index) => (
+                                        <div key={index} className="border-bottom mb-3 pb-2">
+                                            <div className="d-flex justify-content-between">
+                                                <small className="text-muted">
+                                                    {new Date(msg.created_at).toLocaleString()}
+                                                </small>
+                                                <span className="badge bg-secondary">{msg.type}</span>
+                                            </div>
+
+                                            <p className="mb-1">{msg.message}</p>
+
+                                            <small className="text-muted">
+                                                Phone: {msg.phone}
+                                            </small>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p>No messages found</p>
+                                )}
+
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
-
-            </div>
-        </div>
-    </div>
-)}
+            )}
 
             <ToastContainer position="top-right" autoClose={3000} />
         </Layout>
