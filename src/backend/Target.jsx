@@ -457,7 +457,7 @@ const Target = () => {
 
                                                 <td>
                                                     <button
-                                                        className="btn btn-primary btn-sm me-2"
+                                                        className="btn btn-success btn-sm me-2"
                                                         onClick={() => openModal(user)}
                                                     >
                                                         Edit
@@ -741,7 +741,19 @@ const Target = () => {
 
                                         <div className="mb-3">
                                             <label>Month</label>
-                                            <input className="form-control" value={month} onChange={(e) => setMonth(e.target.value)} />
+                                            <select
+                                                className="form-control"
+                                                value={month}
+                                                onChange={(e) => setMonth(e.target.value)}
+                                                required
+                                            >
+                                                <option value="">Select Month</option>
+                                                {[...Array(12)].map((_, i) => (
+                                                    <option key={i} value={i + 1}>
+                                                        {getMonthName(i + 1)}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
                                         <div className="mb-3">
