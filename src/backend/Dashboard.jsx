@@ -192,6 +192,45 @@ const Dashboard = () => {
     };
 
 
+    const [remainders, setRemainders] = useState([]);
+
+
+    const fetchRemainders = async () => {
+        const token = localStorage.getItem("authToken");
+
+        const res = await fetch(`${API_BASE}/get-reviews`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        const json = await res.json();
+
+        if (json.status) {
+            setRemainders(json.data);
+        }
+    };
+
+
+    const getColor = (days) => {
+        if (days < 3) return "red";
+        if (days >= 5 && days <= 7) return "orange";
+        return "green";
+    };
+
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 5;
+
+
+
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+    const currentItems = remainders.slice(indexOfFirstItem, indexOfLastItem);
+
+    const totalPages = Math.ceil(remainders.length / itemsPerPage);
+
 
     useEffect(() => {
         fetchData();
@@ -200,7 +239,8 @@ const Dashboard = () => {
         fetchTopUsers();
         fetchSummary();
         fetchMonthlySummary();
-        fetchVisaStatus();// 👈 add this
+        fetchVisaStatus();
+        fetchRemainders();// 👈 add this
     }, []);
 
     // 🔵 Doughnut (Leads)
@@ -291,54 +331,209 @@ const Dashboard = () => {
 
     return (
         <Layout>
-        <div className="dashboard-wrapper mt-4">
+            <div className="dashboard-wrapper mt-4">
 
-            {/* TOP ROW */}
-            <div className="row g-4 align-items-stretch">
-
+                {/* TOP ROW */}
                 <div className="row g-4 align-items-stretch">
 
-                    {/* Welcome Card */}
-                    <div className="col-lg-4 d-flex">
-                        <div className="card p-4 shadow-sm text-center w-100 h-100">
+                    <div className="row g-4 align-items-stretch">
 
-                            <p>
-                                You have <strong>{summary.today_achieved}</strong> member achieved today
-                            </p>
+                        {/* Welcome Card */}
+                        <div className="col-lg-4 d-flex">
+                            <div className="card p-4 shadow-sm text-center w-100 h-100">
 
-                            <h5 className="mt-3">
-                                {summary.total_achieved} Total Achieved
-                            </h5>
+                                <p>
+                                    You have <strong>{summary.today_achieved}</strong> member achieved today
+                                </p>
 
-                            <div className="d-flex justify-content-center align-items-center mt-2 text-muted gap-3">
+                                <h5 className="mt-3">
+                                    {summary.total_achieved} Total Achieved
+                                </h5>
+
+                                <div className="d-flex justify-content-center align-items-center mt-2 text-muted gap-3">
+                                    <div
+                                        style={{
+                                            backgroundColor: "green",
+                                            padding: "4px 6px",
+                                            borderRadius: "6px",
+                                            color: "white",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center"
+                                        }}
+                                    >
+                                        <i className="bi bi-graph-up-arrow"></i>
+                                    </div>
+
+                                    <span>
+                                        This month: {summary.monthly_achieved}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Leads */}
+                        <div className="col-lg-4 d-flex">
+                            <div className="card p-3 shadow-sm text-center w-100 h-100">
+
+                                {/* Header with Icon */}
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <p className="mb-0 fw-semibold">Monthly Performance</p>
+
+                                    <div
+                                        style={{
+                                            backgroundColor: "green",
+                                            padding: "6px 8px",
+                                            borderRadius: "8px",
+                                            color: "white",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center"
+                                        }}
+                                    >
+                                        <i className="bi bi-activity"></i>
+                                    </div>
+                                </div>
+
+                                {/* Stats */}
+                                <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                    <p className="m-0">Target: {summaryMonth.total_target}</p>
+                                    <p className="m-0">Achieve: {summaryMonth.total_achieved}</p>
+                                    <p className="m-0">Remaining: {summaryMonth.total_remaining}</p>
+                                </div>
+
+                                {/* Chart */}
+                                <div style={{ height: "150px", width: "150px", margin: "0 auto" }}>
+                                    <Doughnut data={pieSummaryData} options={pieOptions} />
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* Sales */}
+                        <div className="col-lg-4 d-flex">
+                            <div className="card p-3 shadow-sm text-center w-100 h-100">
+
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <p className="mb-0 fw-semibold">Total Visa Sales</p>
+
+                                    <div
+                                        style={{
+                                            backgroundColor: "green",
+                                            padding: "6px 8px",
+                                            borderRadius: "6px",
+                                            color: "white",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center"
+                                        }}
+                                    >
+                                        <i className="bi bi-house-fill"></i>
+                                    </div>
+                                </div>
+
+                                <div style={{ height: "150px" }}>
+                                    <Line data={lineData} options={lineOptions} />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <div className="row g-4 mt-2 align-items-stretch">
+
+                    {/* LEFT: Big Chart */}
+                    <div className="col-lg-8 d-flex">
+                        <div className="card p-4 shadow-sm w-100 h-100">
+
+                            {/* Header */}
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h5 className="mb-0">Total Member Collection</h5>
+
                                 <div
                                     style={{
                                         backgroundColor: "green",
-                                        padding: "4px 6px",
-                                        borderRadius: "6px",
+                                        padding: "8px 10px",
+                                        borderRadius: "8px",
                                         color: "white",
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center"
                                     }}
                                 >
-                                    <i className="bi bi-graph-up-arrow"></i>
+                                    <i className="bi bi-people-fill"></i>
                                 </div>
+                            </div>
 
-                                <span>
-                                    This month: {summary.monthly_achieved}
-                                </span>
+                            {/* Chart */}
+                            <div style={{ height: "100%" }}>
+                                <Bar data={barData} />
                             </div>
                         </div>
                     </div>
 
-                    {/* Leads */}
-                    <div className="col-lg-4 d-flex">
-                        <div className="card p-3 shadow-sm text-center w-100 h-100">
+                    {/* RIGHT SIDE */}
+                    <div className="col-lg-4 d-flex flex-column gap-4">
 
-                            {/* Header with Icon */}
+                        {/* Top Performer */}
+                        <div className="card p-4 shadow-sm flex-fill">
+
+                            {/* Header with icon */}
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                                <p className="mb-0 fw-semibold">Monthly Performance</p>
+                                <h5 className="mb-0">Top Performer</h5>
+
+                                <div
+                                    style={{
+                                        backgroundColor: "#ffc107", // yellow
+                                        padding: "8px 10px",
+                                        borderRadius: "8px",
+                                        color: "#000",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center"
+                                    }}
+                                >
+                                    <i className="bi bi-trophy-fill"></i>
+                                </div>
+                            </div>
+
+                            {/* List */}
+                            <ul className="list-group mt-3">
+                                {topUsers.length > 0 ? (
+                                    topUsers.map((user, index) => (
+                                        <li
+                                            key={index}
+                                            className="list-group-item d-flex justify-content-between align-items-center"
+                                        >
+                                            <span>
+                                                {getMedal(index)} {index + 1}. {user.name}
+                                            </span>
+
+                                            <span className="badge bg-success">
+                                                {user.total_achieved}
+                                            </span>
+                                        </li>
+                                    ))
+                                ) : (
+                                    <li className="list-group-item text-center">
+                                        No data found
+                                    </li>
+                                )}
+                            </ul>
+                        </div>
+
+
+                        {/* Status Box */}
+
+
+                        <div className="card p-4 shadow-sm flex-fill">
+                            <div className="d-flex justify-content-between align-items-center mb-2">
+                                <h5 className="mb-0">Monthly Visa Status</h5>
 
                                 <div
                                     style={{
@@ -355,194 +550,159 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            {/* Stats */}
-                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <p className="m-0">Target: {summaryMonth.total_target}</p>
-                                <p className="m-0">Achieve: {summaryMonth.total_achieved}</p>
-                                <p className="m-0">Remaining: {summaryMonth.total_remaining}</p>
+                            <div className="d-flex justify-content-between mt-3">
+                                <span style={{ color: "#ffc107", fontWeight: "500" }}>Pending</span>
+                                <b style={{ color: "#ffc107" }}>{visaStatus.pending}</b>
                             </div>
 
-                            {/* Chart */}
-                            <div style={{ height: "150px", width: "150px", margin: "0 auto" }}>
-                                <Doughnut data={pieSummaryData} options={pieOptions} />
+                            <div className="d-flex justify-content-between mt-3">
+                                <span style={{ color: "#12b0d8", fontWeight: "500" }}>Processing</span>
+                                <b style={{ color: "#12b0d8" }}>{visaStatus.processing}</b>
                             </div>
 
-                        </div>
-                    </div>
 
-                    {/* Sales */}
-                    <div className="col-lg-4 d-flex">
-                        <div className="card p-3 shadow-sm text-center w-100 h-100">
-
-                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                <p className="mb-0 fw-semibold">Total Visa Sales</p>
-
-                                <div
-                                    style={{
-                                        backgroundColor: "green",
-                                        padding: "6px 8px",
-                                        borderRadius: "6px",
-                                        color: "white",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center"
-                                    }}
-                                >
-                                    <i className="bi bi-house-fill"></i>
-                                </div>
+                            <div className="d-flex justify-content-between mt-3">
+                                <span style={{ color: "#1f4b03", fontWeight: "500" }}>Complete</span>
+                                <b style={{ color: "#1f4b03" }}>{visaStatus.complete}</b>
                             </div>
 
-                            <div style={{ height: "150px" }}>
-                                <Line data={lineData} options={lineOptions} />
+                             <div className="d-flex justify-content-between mt-3">
+                                <span style={{ color: "#f83a00", fontWeight: "500" }}>Cancle</span>
+                                <b style={{ color: "#f83a00" }}>{visaStatus.cancle}</b>
+                            </div>
+                            <hr />
+
+                            <div className="d-flex justify-content-between">
+                                <span>Total</span>
+                                <b>{visaStatus.total}</b>
                             </div>
                         </div>
+
+
+
+
                     </div>
 
                 </div>
 
+                <div className="card p-4 shadow-sm mt-4">
 
-            </div>
+                    {/* Header */}
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="mb-0"> Customer Remainder Info</h5>
 
-
-
-            <div className="row g-4 mt-2 align-items-stretch">
-
-                {/* LEFT: Big Chart */}
-                <div className="col-lg-8 d-flex">
-                    <div className="card p-4 shadow-sm w-100 h-100">
-
-                        {/* Header */}
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="mb-0">Total Member Collection</h5>
-
-                            <div
-                                style={{
-                                    backgroundColor: "green",
-                                    padding: "8px 10px",
-                                    borderRadius: "8px",
-                                    color: "white",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center"
-                                }}
-                            >
-                                <i className="bi bi-people-fill"></i>
-                            </div>
-                        </div>
-
-                        {/* Chart */}
-                        <div style={{ height: "100%" }}>
-                            <Bar data={barData} />
+                        <div
+                            style={{
+                                backgroundColor: "#0d6efd",
+                                padding: "8px 10px",
+                                borderRadius: "8px",
+                                color: "white",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center"
+                            }}
+                        >
+                            <i className="bi bi-bell-fill"></i>
                         </div>
                     </div>
-                </div>
 
-                {/* RIGHT SIDE */}
-                <div className="col-lg-4 d-flex flex-column gap-4">
-
-                    {/* Top Performer */}
-                    <div className="card p-4 shadow-sm flex-fill">
-
-                        {/* Header with icon */}
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h5 className="mb-0">Top Performer</h5>
-
-                            <div
-                                style={{
-                                    backgroundColor: "#ffc107", // yellow
-                                    padding: "8px 10px",
-                                    borderRadius: "8px",
-                                    color: "#000",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center"
-                                }}
-                            >
-                                <i className="bi bi-trophy-fill"></i>
-                            </div>
-                        </div>
-
-                        {/* List */}
-                        <ul className="list-group mt-3">
-                            {topUsers.length > 0 ? (
-                                topUsers.map((user, index) => (
-                                    <li
-                                        key={index}
-                                        className="list-group-item d-flex justify-content-between align-items-center"
-                                    >
-                                        <span>
-                                            {getMedal(index)} {index + 1}. {user.name}
-                                        </span>
-
-                                        <span className="badge bg-success">
-                                            {user.total_achieved}
-                                        </span>
-                                    </li>
-                                ))
-                            ) : (
-                                <li className="list-group-item text-center">
-                                    No data found
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-
-
-                    {/* Status Box */}
-
-
-                    <div className="card p-4 shadow-sm flex-fill">
-                        <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h5 className="mb-0">Monthly Visa Status</h5>
-
-                            <div
-                                style={{
-                                    backgroundColor: "green",
-                                    padding: "6px 8px",
-                                    borderRadius: "8px",
-                                    color: "white",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center"
-                                }}
-                            >
-                                <i className="bi bi-activity"></i>
-                            </div>
-                        </div>
-
-                        <div className="d-flex justify-content-between mt-3">
-                            <span style={{ color: "#ffc107", fontWeight: "500" }}>Pending</span>
-                            <b style={{ color: "#ffc107" }}>{visaStatus.pending}</b>
-                        </div>
-
-                      <div className="d-flex justify-content-between mt-3">
-                            <span style={{ color: "#12b0d8", fontWeight: "500" }}>Processing</span>
-                            <b style={{ color: "#12b0d8" }}>{visaStatus.processing}</b>
-                        </div>
+                    {/* Table */}
+                    <div className="table-responsive">
                         
-                     
-                         <div className="d-flex justify-content-between mt-3">
-                            <span style={{ color: "#1f4b03", fontWeight: "500" }}>Complete</span>
-                            <b style={{ color: "#1f4b03" }}>{visaStatus.complete}</b>
-                        </div>
-                        <hr />
 
-                        <div className="d-flex justify-content-between">
-                            <span>Total</span>
-                            <b>{visaStatus.total}</b>
+                        {/* TABLE */}
+                        <div className="table-responsive">
+                            <table className="table table-bordered table-hover align-middle text-center">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Customer Name</th>
+                                        <th>Phone</th>
+                                        <th>Remainder Date Remaining</th>
+                                        <th>Invoice</th>
+                                        <th>Passport</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    {currentItems.length > 0 ? (
+                                        currentItems.map((item, index) => {
+                                            const color = getColor(item.remainder_days);
+
+                                            return (
+                                                <tr key={index}>
+                                                    <td>{item.name}</td>
+                                                    <td>{item.phone}</td>
+
+                                                    <td style={{ color: color, fontWeight: "bold" }}>
+                                                        {item.remainder_days} Days
+                                                    </td>
+
+                                                    <td>{item.invoice}</td>
+                                                    <td>{item.passport}</td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="text-center">
+                                                No remainder data found
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* PAGINATION (ONLY ONCE) */}
+                        <div className="d-flex justify-content-center mt-3">
+                            <nav>
+                                <ul className="pagination">
+
+                                    {/* Prev */}
+                                    <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                        <button
+                                            className="page-link"
+                                            onClick={() => setCurrentPage(prev => prev - 1)}
+                                        >
+                                            <i className="bi bi-chevron-left"></i>
+                                        </button>
+                                    </li>
+
+                                    {/* Pages */}
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <li
+                                            key={i}
+                                            className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
+                                        >
+                                            <button
+                                                className="page-link"
+                                                onClick={() => setCurrentPage(i + 1)}
+                                            >
+                                                {i + 1}
+                                            </button>
+                                        </li>
+                                    ))}
+
+                                    {/* Next */}
+                                    <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                        <button
+                                            className="page-link"
+                                            onClick={() => setCurrentPage(prev => prev + 1)}
+                                        >
+                                            <i className="bi bi-chevron-right"></i>
+                                        </button>
+                                    </li>
+
+                                </ul>
+                            </nav>
                         </div>
                     </div>
-
-
-
 
                 </div>
 
             </div>
-
-        </div>
         </Layout>
-        
+
     );
 };
 

@@ -54,6 +54,11 @@ const Visa = () => {
     const [note, setNote] = useState("");
 
 
+    const [showMsgModal, setShowMsgModal] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [loadingMsg, setLoadingMsg] = useState(false);
+
+
 
 
 
@@ -158,6 +163,31 @@ const Visa = () => {
     };
 
 
+
+    const fetchMessages = async (visaId) => {
+        try {
+            setLoadingMsg(true);
+
+            const token = localStorage.getItem("authToken");
+
+            const res = await axios.get(`${API_BASE}/visa/${visaId}/messages`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            if (res.data.status) {
+                setMessages(res.data.data);
+                setShowMsgModal(true);
+            }
+
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to load messages");
+        } finally {
+            setLoadingMsg(false);
+        }
+    };
 
 
 
@@ -337,6 +367,8 @@ const Visa = () => {
         return remaining > 0 ? remaining + " days left" : "Expired";
     };
 
+
+
     const editVisa = async (id) => {
         try {
 
@@ -366,7 +398,19 @@ const Visa = () => {
                 setSalaryAmount(data.salary_amount);
                 setApplicantType(data.applicant_type);
                 setMemberName(data.member || "");
+                setNote(data.note || "");
 
+                // 🔥 ✅ Use your existing function
+                const remainingText = calculateRemainingDays(data);
+
+                // 👉 Option 1: show text (recommended)
+                // setRemainderDays(remainingText);
+
+                // 👉 Option 2: only number (if needed)
+                const remainingNumber = parseInt(remainingText) || 0;
+                setRemainderDays(remainingNumber);
+
+                // Preview image
                 if (data.image) {
                     setPreview(data.image);
                 }
@@ -472,6 +516,9 @@ const Visa = () => {
         setAssetValuation("");
         setSalaryAmount("");
         setMemberName(1);
+
+        setNote("");
+        setRemainderDays("");
 
         setEditId(null);
         setViewData(null);
@@ -595,6 +642,7 @@ const Visa = () => {
             }
         }
     };
+
 
 
 
@@ -764,6 +812,13 @@ const Visa = () => {
                                                                 <i className="bi bi-trash"></i>
                                                             </button>
                                                         )}
+
+                                                        <button
+                                                            className="btn btn-success btn-sm me-2"
+                                                            onClick={() => fetchMessages(review.id)}
+                                                        >
+                                                            <i className="bi bi-chat-dots"></i>
+                                                        </button>
 
                                                     </td>
                                                 </tr>
@@ -1030,12 +1085,13 @@ const Visa = () => {
                                                 >
                                                     <option value="Pending">Pending</option>
                                                     <option value="Processing">Processing</option>
-                                                    <option value="Complete">Complete</option>
+                                                      <option value="Complete">Complete</option>
+                                                    <option value="Cancle">Cancle</option>
                                                 </select>
                                             </div>
 
                                             {/* NOTE → ONLY Pending & Processing */}
-                                            {(status === "Pending" || status === "Processing") && (
+                                            {(status === "Pending" || status === "Processing" || status ==="Cancle") && (
                                                 <div className="col-md-6 mb-3">
                                                     <label className="form-label">Note</label>
                                                     <textarea
@@ -1056,7 +1112,7 @@ const Visa = () => {
                                         <div className="col-md-6 mb-3">
                                             <label className="form-label">Remainder Days</label>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 className="form-control"
                                                 value={remainderDays}
                                                 onChange={(e) => setRemainderDays(e.target.value)}
@@ -1506,6 +1562,49 @@ const Visa = () => {
                     </div>
                 </div>
             )}
+
+
+            {showMsgModal && (
+    <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
+        <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+
+                <div className="modal-header">
+                    <h5 className="modal-title">Message History</h5>
+                    <button className="btn-close" onClick={() => setShowMsgModal(false)}></button>
+                </div>
+
+                <div className="modal-body" style={{ maxHeight: "400px", overflowY: "auto" }}>
+
+                    {loadingMsg ? (
+                        <p>Loading...</p>
+                    ) : messages.length > 0 ? (
+                        messages.map((msg, index) => (
+                            <div key={index} className="border-bottom mb-3 pb-2">
+                                <div className="d-flex justify-content-between">
+                                    <small className="text-muted">
+                                        {new Date(msg.created_at).toLocaleString()}
+                                    </small>
+                                    <span className="badge bg-secondary">{msg.type}</span>
+                                </div>
+
+                                <p className="mb-1">{msg.message}</p>
+
+                                <small className="text-muted">
+                                    Phone: {msg.phone}
+                                </small>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No messages found</p>
+                    )}
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+)}
 
             <ToastContainer position="top-right" autoClose={3000} />
         </Layout>
