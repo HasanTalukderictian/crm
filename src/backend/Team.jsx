@@ -14,13 +14,17 @@ const Team = () => {
   const [showModal, setShowModal] = useState(false);
 
   const [name, setName] = useState("");
-  const [departmentId, setDepartmentId] = useState(""); // replaced designation
-  const [departments, setDepartments] = useState([]); // API fetched departments
+  const [departmentId, setDepartmentId] = useState("");
+  const [departments, setDepartments] = useState([]);
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const userRole = localStorage.getItem("userRole"); // "admin" or "user"
+  const userRole = localStorage.getItem("userRole");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Fetch team data
   const fetchData = () => {
@@ -46,6 +50,29 @@ const Team = () => {
     fetchData();
     fetchDepartments();
   }, []);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  
+  // Next page
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  // Previous page
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   // Image Handling
   const handleImageChange = (e) => {
@@ -77,7 +104,7 @@ const Team = () => {
 
     const formData = new FormData();
     formData.append("name", name);
-    formData.append("department_id", departmentId); // replaced
+    formData.append("department_id", departmentId);
     if (image) formData.append("image", image);
 
     try {
@@ -122,7 +149,6 @@ const Team = () => {
           <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h3>Team List</h3>
-              {/* Show +Add button only for admin */}
               {userRole === "admin" && (
                 <button className="btn btn-success" onClick={() => setShowModal(true)}>
                   + Add
@@ -133,55 +159,128 @@ const Team = () => {
             {loading ? (
               <p>Loading...</p>
             ) : (
-              <div className="table-responsive">
-                <table className="table table-bordered table-striped">
-                  <thead className="table-dark">
-                    <tr>
-                      <th>Name</th>
-                      <th>Department</th>
-                      <th>Image</th>
-                      {userRole === "admin" && <th>Action</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.length > 0 ? (
-                      data.map((item) => (
-                        <tr key={item.id}>
-                          <td>{item.name}</td>
-                          <td>{item.department_name}</td>
-                          <td>
-                            {item.image && (
-                              <img
-                                src={item.image}
-                                width="60"
-                                height="60"
-                                style={{ objectFit: "cover" }}
-                                alt=""
-                              />
-                            )}
-                          </td>
-                          {userRole === "admin" && (
-                            <td>
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => deleteBanner(item.id)}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))
-                    ) : (
+              <>
+                <div className="table-responsive">
+                  <table className="table table-bordered table-striped">
+                    <thead className="table-dark">
                       <tr>
-                        <td colSpan={userRole === "admin" ? 4 : 3} className="text-center">
-                          No Data Found
-                        </td>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Image</th>
+                        {userRole === "admin" && <th>Action</th>}
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {currentItems.length > 0 ? (
+                        currentItems.map((item) => (
+                          <tr key={item.id}>
+                            <td>{item.name}</td>
+                            <td>{item.department_name}</td>
+                            <td>
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  width="60"
+                                  height="60"
+                                  style={{ objectFit: "cover" }}
+                                  alt=""
+                                />
+                              )}
+                            </td>
+                            {userRole === "admin" && (
+                              <td>
+                                <button
+                                  className="btn btn-danger btn-sm"
+                                  onClick={() => deleteBanner(item.id)}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={userRole === "admin" ? 4 : 3} className="text-center">
+                            No Data Found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination Section - Centered */}
+                {totalPages > 1 && (
+                  <div className="d-flex justify-content-center mt-4">
+                    <nav>
+                      <ul className="pagination align-items-center gap-1 mb-0">
+                        {/* Previous Button */}
+                        <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                          <button
+                            className="page-link d-flex align-items-center justify-content-center"
+                            onClick={prevPage}
+                            style={{ minWidth: "40px", height: "40px" }}
+                            disabled={currentPage === 1}
+                          >
+                            <i className="bi bi-chevron-left"></i> {/* < icon */}
+                          </button>
+                        </li>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: totalPages }, (_, i) => {
+                          // Show limited page numbers (optional: show 5 pages at a time)
+                          const pageNum = i + 1;
+                          const maxVisible = 5;
+                          const halfVisible = Math.floor(maxVisible / 2);
+                          
+                          let startPage = Math.max(1, currentPage - halfVisible);
+                          let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+                          
+                          if (endPage - startPage + 1 < maxVisible) {
+                            startPage = Math.max(1, endPage - maxVisible + 1);
+                          }
+                          
+                          if (pageNum >= startPage && pageNum <= endPage) {
+                            return (
+                              <li
+                                key={pageNum}
+                                className={`page-item ${currentPage === pageNum ? "active" : ""}`}
+                              >
+                                <button
+                                  className="page-link d-flex align-items-center justify-content-center"
+                                  onClick={() => paginate(pageNum)}
+                                  style={{ minWidth: "40px", height: "40px" }}
+                                >
+                                  {pageNum}
+                                </button>
+                              </li>
+                            );
+                          }
+                          return null;
+                        })}
+
+                        {/* Next Button */}
+                        <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                          <button
+                            className="page-link d-flex align-items-center justify-content-center"
+                            onClick={nextPage}
+                            style={{ minWidth: "40px", height: "40px" }}
+                            disabled={currentPage === totalPages}
+                          >
+                            <i className="bi bi-chevron-right"></i> {/* > icon */}
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                )}
+
+                {/* Optional: Showing entries info */}
+                <div className="text-center text-muted mt-2">
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, data.length)} of {data.length} entries
+                </div>
+              </>
             )}
           </div>
 
@@ -200,7 +299,6 @@ const Team = () => {
               </div>
 
               <div className="modal-body">
-                {/* Name */}
                 <div className="mb-3">
                   <label className="form-label">Name</label>
                   <input
@@ -212,7 +310,6 @@ const Team = () => {
                   />
                 </div>
 
-                {/* Department Dropdown */}
                 <div className="mb-3">
                   <label className="form-label">Department</label>
                   <select
@@ -229,13 +326,11 @@ const Team = () => {
                   </select>
                 </div>
 
-                {/* Image */}
                 <div className="mb-3">
                   <label className="form-label">Image</label>
                   <input type="file" className="form-control" id="bannerImageInput" onChange={handleImageChange} />
                 </div>
 
-                {/* Preview */}
                 {preview && (
                   <div className="position-relative mt-2 d-inline-block">
                     <img

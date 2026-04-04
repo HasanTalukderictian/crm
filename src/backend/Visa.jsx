@@ -21,8 +21,8 @@ const Visa = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
-     const today = new Date();
-   
+    const today = new Date();
+
 
 
     const userRole = localStorage.getItem("userRole"); // "admin" or "user"
@@ -306,21 +306,21 @@ const Visa = () => {
         }
     };
 
-   const formatDate = (date) => {
-    const d = new Date(date);
-    
-    const day = String(d.getDate()).padStart(2, "0");
-    
-    const months = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
-    
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    
-    return `${day}-${month}-${year}`;  // This will output: 04-Apr-2026
-};
+    const formatDate = (date) => {
+        const d = new Date(date);
+
+        const day = String(d.getDate()).padStart(2, "0");
+
+        const months = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
+
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+
+        return `${day}-${month}-${year}`;  // This will output: 04-Apr-2026
+    };
 
 
     useEffect(() => {
@@ -494,10 +494,10 @@ const Visa = () => {
 
 
     useEffect(() => {
-    const today = new Date();
-    const formattedDate = formatDate(today);  // This will give "04-Apr-2026"
-    setDate(formattedDate);
-}, []);
+        const today = new Date();
+        const formattedDate = formatDate(today);  // This will give "04-Apr-2026"
+        setDate(formattedDate);
+    }, []);
 
 
     const renderFile = (file, label) => {
@@ -771,6 +771,68 @@ const Visa = () => {
                 <div className="flex-grow-1">
                     <DashNav />
                     <div className="container mt-4">
+                        <div className="d-flex justify-content-end">
+                            <nav>
+                                <ul className="pagination align-items-center gap-1 mb-0">
+                                    {/* Previous Button */}
+                                    <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                        <button
+                                            className="page-link d-flex align-items-center justify-content-center"
+                                            onClick={() => paginate(currentPage - 1)}
+                                            style={{ minWidth: "30px", height: "30px", width: "30px", padding: "0", fontSize: "12px" }}
+                                            disabled={currentPage === 1}
+                                        >
+                                            <i className="bi bi-chevron-left" style={{ fontSize: "10px" }}></i>
+                                        </button>
+                                    </li>
+
+                                    {/* Page Numbers */}
+                                    {Array.from({ length: totalPages }, (_, i) => {
+                                        const pageNum = i + 1;
+                                        // Optional: Show limited page numbers (e.g., 5 at a time)
+                                        const maxVisible = 5;
+                                        const halfVisible = Math.floor(maxVisible / 2);
+
+                                        let startPage = Math.max(1, currentPage - halfVisible);
+                                        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+                                        if (endPage - startPage + 1 < maxVisible) {
+                                            startPage = Math.max(1, endPage - maxVisible + 1);
+                                        }
+
+                                        if (pageNum >= startPage && pageNum <= endPage) {
+                                            return (
+                                                <li
+                                                    key={pageNum}
+                                                    className={`page-item ${currentPage === pageNum ? "active" : ""}`}
+                                                >
+                                                    <button
+                                                        className="page-link d-flex align-items-center justify-content-center"
+                                                        onClick={() => paginate(pageNum)}
+                                                        style={{ minWidth: "30px", height: "30px", width: "30px", padding: "0", fontSize: "12px" }}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                </li>
+                                            );
+                                        }
+                                        return null;
+                                    })}
+
+                                    {/* Next Button */}
+                                    <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                        <button
+                                            className="page-link d-flex align-items-center justify-content-center"
+                                            onClick={() => paginate(currentPage + 1)}
+                                            style={{ minWidth: "30px", height: "30px", width: "30px", padding: "0", fontSize: "12px" }}
+                                            disabled={currentPage === totalPages}
+                                        >
+                                            <i className="bi bi-chevron-right" style={{ fontSize: "10px" }}></i>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
                         <div className="d-flex justify-content-between align-items-center mb-3">
                             <h3>Visa Management</h3>
                             <div className="d-flex align-items-center">
@@ -1077,7 +1139,7 @@ const Visa = () => {
                                         <input
                                             type="text"
                                             className="form-control"
-                                             value={formatDate(today)}
+                                            value={formatDate(today)}
                                             readOnly
                                         />
                                     </div>
@@ -1190,13 +1252,13 @@ const Visa = () => {
 
                                         {/* REMAINDER DAYS FIELD */}
                                         <div className="col-md-6 mb-3">
-                                            <label className="form-label">Remainder Days</label>
+                                            <label className="form-label">Reminders Days</label>
                                             <input
                                                 type="text"
                                                 className="form-control"
                                                 value={remainderDays}
                                                 onChange={(e) => setRemainderDays(e.target.value)}
-                                                placeholder="Enter remaining days"
+                                                placeholder="Enter Reminders days"
                                                 min="0"
                                             />
                                         </div>
@@ -1662,7 +1724,7 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Date</label>
-                                        <input className="form-control" value={viewData.date} readOnly />
+                                        <input className="form-control" value={formatDate(viewData.date)} readOnly />
                                     </div>
 
                                     <div className="col-md-6 mb-3">
