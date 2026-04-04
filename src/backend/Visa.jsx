@@ -13,10 +13,16 @@ import '../assets/css/visa.scss'
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
+
+
+
 const Visa = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+
+     const today = new Date();
+   
 
 
     const userRole = localStorage.getItem("userRole"); // "admin" or "user"
@@ -92,22 +98,22 @@ const Visa = () => {
     // const [fileChecks, setFileChecks] = useState({});
 
     const [fileChecks, setFileChecks] = useState({
-    bankCertificate: false,
-    nidFile: false,
-    assetValuation: false,
-    birthCertificate: false,
-    marriageCertificate: false,
-    nocLetter: false,
-    officeId: false,
-    salarySlips: false,
-    governmentOrder: false,
-    visitingCard: false,
-    salaryAmount: false,
-    companyBankStatement: false,
-    blankOfficePad: false,
-    renewalTradeLicense: false,
-    memorandumLimited: false,
-});
+        bankCertificate: false,
+        nidFile: false,
+        assetValuation: false,
+        birthCertificate: false,
+        marriageCertificate: false,
+        nocLetter: false,
+        officeId: false,
+        salarySlips: false,
+        governmentOrder: false,
+        visitingCard: false,
+        salaryAmount: false,
+        companyBankStatement: false,
+        blankOfficePad: false,
+        renewalTradeLicense: false,
+        memorandumLimited: false,
+    });
 
     const [preview, setPreview] = useState(null);
 
@@ -300,6 +306,22 @@ const Visa = () => {
         }
     };
 
+   const formatDate = (date) => {
+    const d = new Date(date);
+    
+    const day = String(d.getDate()).padStart(2, "0");
+    
+    const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    
+    return `${day}-${month}-${year}`;  // This will output: 04-Apr-2026
+};
+
 
     useEffect(() => {
         if (viewData) {
@@ -469,6 +491,13 @@ const Visa = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, selectedMonth, selectedYear]);
+
+
+    useEffect(() => {
+    const today = new Date();
+    const formattedDate = formatDate(today);  // This will give "04-Apr-2026"
+    setDate(formattedDate);
+}, []);
 
 
     const renderFile = (file, label) => {
@@ -730,10 +759,6 @@ const Visa = () => {
             }
         }
     };
-
-
-
-
 
 
 
@@ -1050,9 +1075,9 @@ const Visa = () => {
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Date</label>
                                         <input
-                                            type="date"
+                                            type="text"
                                             className="form-control"
-                                            value={date}
+                                             value={formatDate(today)}
                                             readOnly
                                         />
                                     </div>
