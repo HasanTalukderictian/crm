@@ -22,9 +22,67 @@ const Team = () => {
 
   const userRole = localStorage.getItem("userRole");
 
+  const [editId, setEditId] = useState(null);
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+
+
+  const userId = Number(localStorage.getItem("userId"));
+
+
+  const handleEdit = (item) => {
+    setEditId(item.id);
+    setName(item.name);
+    setDepartmentId(item.department_id);
+    setPreview(item.image); // existing image
+    setShowModal(true);
+  };
+
+
+
+
+
+  const updateBanner = async () => {
+    if (!departmentId) {
+      toast.error("Please select a department");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("department_id", departmentId);
+    formData.append("role", userRole);
+    formData.append("user_id", userId);
+
+    if (image) formData.append("image", image);
+
+    try {
+      const res = await axios.post(`${API_BASE}/update-team/${editId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res.data.status) {
+        fetchData();
+        setShowModal(false);
+        resetForm();
+        setEditId(null);
+        toast.success("Team updated successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+
+      if (err.response?.data?.errors?.name) {
+        toast.error(err.response.data.errors.name[0]);
+      } else if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Failed to add team member.");
+      }
+    }
+  };
 
   // Fetch team data
   const fetchData = () => {
@@ -59,14 +117,14 @@ const Team = () => {
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  
+
   // Next page
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
-  
+
   // Previous page
   const prevPage = () => {
     if (currentPage > 1) {
@@ -93,6 +151,7 @@ const Team = () => {
     setDepartmentId("");
     setImage(null);
     setPreview(null);
+    setEditId(null);
   };
 
   // Submit Team member
@@ -120,7 +179,14 @@ const Team = () => {
       }
     } catch (err) {
       console.error(err);
-      toast.error("Failed to add team member.");
+
+      if (err.response?.data?.errors?.name) {
+        toast.error(err.response.data.errors.name[0]);
+      } else if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error("Failed to add team member.");
+      }
     }
   };
 
@@ -140,6 +206,9 @@ const Team = () => {
     }
   };
 
+
+
+
   return (
     <Layout>
       <div className="d-flex">
@@ -150,7 +219,14 @@ const Team = () => {
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h3>Team List</h3>
               {userRole === "admin" && (
-                <button className="btn btn-success" onClick={() => setShowModal(true)}>
+                <button
+                  className="btn btn-success"
+                  onClick={() => {
+                    setEditId(null);
+                    resetForm();   // ✅ clear previous data
+                    setShowModal(true);
+                  }}
+                >
                   + Add
                 </button>
               )}
@@ -188,7 +264,17 @@ const Team = () => {
                               )}
                             </td>
                             {userRole === "admin" && (
-                              <td>
+
+                              <td className="d-flex gap-2">
+                                {/* Edit Button */}
+                                <button
+                                  className="btn btn-warning btn-sm me-2"
+                                  onClick={() => handleEdit(item)}
+                                >
+                                  <i className="bi bi-pencil-square"></i>
+                                </button>
+
+                                {/* Delete Button */}
                                 <button
                                   className="btn btn-danger btn-sm"
                                   onClick={() => deleteBanner(item.id)}
@@ -196,6 +282,7 @@ const Team = () => {
                                   <i className="bi bi-trash"></i>
                                 </button>
                               </td>
+
                             )}
                           </tr>
                         ))
@@ -233,14 +320,14 @@ const Team = () => {
                           const pageNum = i + 1;
                           const maxVisible = 5;
                           const halfVisible = Math.floor(maxVisible / 2);
-                          
+
                           let startPage = Math.max(1, currentPage - halfVisible);
                           let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-                          
+
                           if (endPage - startPage + 1 < maxVisible) {
                             startPage = Math.max(1, endPage - maxVisible + 1);
                           }
-                          
+
                           if (pageNum >= startPage && pageNum <= endPage) {
                             return (
                               <li
@@ -294,7 +381,9 @@ const Team = () => {
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Add Team Member</h5>
+                <h5 className="modal-title">
+                  {editId ? "Edit Team Member" : "Add Team Member"}
+                </h5>
                 <button className="btn-close" onClick={() => { setShowModal(false); resetForm(); }}></button>
               </div>
 
@@ -367,8 +456,11 @@ const Team = () => {
                 <button className="btn btn-danger" onClick={() => { setShowModal(false); resetForm(); }}>
                   Close
                 </button>
-                <button className="btn btn-success" onClick={submitBanner}>
-                  Save
+                <button
+                  className="btn btn-success"
+                  onClick={editId ? updateBanner : submitBanner}
+                >
+                  {editId ? "Update" : "Save"}
                 </button>
               </div>
             </div>
