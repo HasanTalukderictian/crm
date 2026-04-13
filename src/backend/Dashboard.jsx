@@ -232,6 +232,24 @@ const Dashboard = () => {
     const totalPages = Math.ceil(remainders.length / itemsPerPage);
 
 
+    const [topSales, setTopSales] = useState([]);
+
+    const fetchTopSales = async () => {
+        const token = localStorage.getItem("authToken");
+        try {
+            const res = await fetch(`${API_BASE}/get-topsales`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const json = await res.json();
+            if (json.status) {
+                setTopSales(json.data);
+            }
+        } catch (error) {
+            console.error("Error fetching top sales:", error);
+        }
+    };
+
+
     useEffect(() => {
         fetchData();
         fetchMonthlySales();
@@ -240,7 +258,8 @@ const Dashboard = () => {
         fetchSummary();
         fetchMonthlySummary();
         fetchVisaStatus();
-        fetchRemainders();// 👈 add this
+        fetchRemainders();
+        fetchTopSales();// 👈 add this
     }, []);
 
     // 🔵 Doughnut (Leads)
@@ -485,7 +504,7 @@ const Dashboard = () => {
 
                             {/* Header with icon */}
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                                <h5 className="mb-0">Top Performer</h5>
+                                <h5 className="mb-0">Top Performer Processing</h5>
 
                                 <div
                                     style={{
@@ -566,7 +585,7 @@ const Dashboard = () => {
                                 <b style={{ color: "#1f4b03" }}>{visaStatus.complete}</b>
                             </div>
 
-                             <div className="d-flex justify-content-between mt-3">
+                            <div className="d-flex justify-content-between mt-3">
                                 <span style={{ color: "#f83a00", fontWeight: "500" }}>Cancle</span>
                                 <b style={{ color: "#f83a00" }}>{visaStatus.cancle}</b>
                             </div>
@@ -586,12 +605,62 @@ const Dashboard = () => {
                 </div>
 
                 <div className="card p-4 shadow-sm mt-4">
+                    {/* Header */}
+                    <div className="d-flex justify-content-between align-items-center mb-4">
+                        <h5 className="mb-0 fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
+                            Top 5 Performer Sales
+                        </h5>
+                        <div style={{
+                            backgroundColor: "#ffc107",
+                            padding: "8px 12px",
+                            borderRadius: "10px",
+                            color: "#000",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                        }}>
+                            <i className="bi bi-award-fill"></i>
+                        </div>
+                    </div>
+
+                    {/* Performers Row */}
+                    <div className="row g-3">
+                        {topSales.length > 0 ? (
+                            // .slice(0, 5) দিয়ে ৫ জন লিমিট করা হয়েছে
+                            topSales.slice(0, 5).map((item, index) => (
+                                <div key={index} className="col-lg col-md-6 col-sm-12">
+                                    <div className="card border-0 h-100" style={{
+                                        backgroundColor: "#f8f9fa",
+                                        borderRadius: "12px",
+                                        transition: "transform 0.2s"
+                                    }}>
+                                        <div className="card-body p-3 text-center">
+                                            <div className="fs-2 mb-2">{getMedal(index)}</div>
+                                            <h6 className="fw-bold mb-1 text-truncate" title={item.team?.name}>
+                                                {item.team?.name}
+                                            </h6>
+                                            <div className="mt-2">
+                                                <span className="badge rounded-pill bg-primary px-3 py-2">
+                                                    {item.total_visas} Visas
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-12 text-center py-4 text-muted">
+                                <i className="bi bi-info-circle me-2"></i> No sales data found
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="card p-4 shadow-sm mt-4">
 
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="mb-0"> Customer Remainder Info</h5>
 
-                        <div
+                        {/* <div
                             style={{
                                 backgroundColor: "#0d6efd",
                                 padding: "8px 10px",
@@ -603,12 +672,12 @@ const Dashboard = () => {
                             }}
                         >
                             <i className="bi bi-bell-fill"></i>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Table */}
                     <div className="table-responsive">
-                        
+
 
                         {/* TABLE */}
                         <div className="table-responsive">
