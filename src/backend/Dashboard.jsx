@@ -213,7 +213,7 @@ const Dashboard = () => {
 
 
     const getColor = (days) => {
-        if (days < 3) return "red";
+        if (days <= 3) return "red";
         if (days >= 5 && days <= 7) return "orange";
         return "green";
     };
@@ -608,7 +608,7 @@ const Dashboard = () => {
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <h5 className="mb-0 fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
-                            Top 5 Performer Sales
+                            Top 5 Performer Visa Processing
                         </h5>
                         <div style={{
                             backgroundColor: "#ffc107",
@@ -660,7 +660,7 @@ const Dashboard = () => {
                     <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="mb-0"> Customer Remainder Info</h5>
 
-                        {/* <div
+                        <div
                             style={{
                                 backgroundColor: "#0d6efd",
                                 padding: "8px 10px",
@@ -672,7 +672,7 @@ const Dashboard = () => {
                             }}
                         >
                             <i className="bi bi-bell-fill"></i>
-                        </div> */}
+                        </div>
                     </div>
 
                     {/* Table */}

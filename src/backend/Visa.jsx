@@ -28,9 +28,6 @@ const Visa = () => {
     const userRole = localStorage.getItem("userRole"); // "admin" or "user"
     const userId = Number(localStorage.getItem("userId"));
 
-    // console.log("Logged-in User Role:", userRole);
-    // console.log("Logged-in User ID:", userId);
-    // console.log("All Reviews Data:", reviews);
 
     // Text / number fields
     const [name, setName] = useState("");
@@ -58,6 +55,9 @@ const Visa = () => {
     const [searchQuery, setSearchQuery] = useState("");
 
     const [note, setNote] = useState("");
+
+    const [professionName, setProfessionName] = useState("");
+    const [missingFile, setMissingFile] = useState("");
 
 
     const [showMsgModal, setShowMsgModal] = useState(false);
@@ -590,6 +590,9 @@ const Visa = () => {
 
         setNote("");
         setRemainderDays("");
+        setMissingFile("");
+        setProfessionName("");
+        
 
         setEditId(null);
         setViewData(null);
@@ -651,6 +654,8 @@ const Visa = () => {
         formData.append("status", status);
         formData.append("remainder_days", remainderDays);
         formData.append("note", note);
+        formData.append("profession_name", professionName);
+        formData.append("missing_file", missingFile);
 
         formData.append("fileChecks", JSON.stringify(fileChecks));
 
@@ -739,7 +744,7 @@ const Visa = () => {
             });
 
             if (res.data.status) {
-                toast.success("Review deleted successfully!");
+                toast.success("Visa deleted successfully!");
                 fetchReviews();
             }
 
@@ -1029,6 +1034,8 @@ const Visa = () => {
             </div>
 
             {/* Modal */}
+
+
             {showModal && (
                 <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
                     <div className="modal-dialog modal-lg">
@@ -1211,6 +1218,52 @@ const Visa = () => {
                                                 Business Owner
                                             </label>
                                         </div>
+
+                                        {/* 🔥 Others (FIXED VALUE) */}
+                                        <div className="form-check form-check-inline">
+                                            <input
+                                                className="form-check-input"
+                                                type="radio"
+                                                name="applicantType"
+                                                id="others"
+                                                value="others"
+                                                checked={applicantType === "others"}
+                                                onChange={(e) => setApplicantType(e.target.value)}
+                                            />
+                                            <label className="form-check-label" htmlFor="others">
+                                                Others
+                                            </label>
+                                        </div>
+
+                                        {/* ================= 🔥 CONDITIONAL FIELDS ================= */}
+                                        {applicantType === "others" && (
+                                            <div className="row mt-3">
+
+                                                {/* Profession Name */}
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Profession Name</label>
+                                                    <input
+                                                        type="text"
+                                                        name="profession_name"
+                                                        value={professionName}
+                                                        onChange={(e) => setProfessionName(e.target.value)}
+                                                    />
+                                                </div>
+
+                                                {/* Missing File */}
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label">Missing File</label>
+                                                    <input
+                                                        type="text"
+                                                        name="missing_file"
+                                                        value={missingFile}
+                                                        onChange={(e) => setMissingFile(e.target.value)}
+                                                    />
+                                                </div>
+
+                                            </div>
+                                        )}
+
 
 
 
@@ -1675,6 +1728,8 @@ const Visa = () => {
                     </div>
                 </div>
             )}
+
+
 
             {viewModal && viewData && (
                 <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
