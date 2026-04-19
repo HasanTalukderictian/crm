@@ -36,7 +36,7 @@ const UserSettings = () => {
     const fetchUsers = async () => {
         try {
 
-            const token = localStorage.getItem("adminToken");
+            const token = localStorage.getItem("authToken");
 
             const response = await fetch(`${API_BASE}/users`, {
                 headers: {
@@ -84,7 +84,7 @@ const UserSettings = () => {
         }
 
         try {
-            const token = localStorage.getItem("adminToken");
+            const token = localStorage.getItem("authToken");
 
             const response = await fetch(`${API_BASE}/users/${selectedUserId}/reset-password`, {
                 method: "POST",
@@ -116,7 +116,7 @@ const UserSettings = () => {
     const toggleStatus = async (userId, currentStatus) => {
         try {
 
-            const token = localStorage.getItem("adminToken");
+            const token = localStorage.getItem("authToken");
 
             const response = await fetch(`${API_BASE}/users/${userId}/toggle-status`, {
                 method: "POST",
@@ -147,7 +147,7 @@ const UserSettings = () => {
     const handleAddUser = async (e) => {
         e.preventDefault();
 
-        const token = localStorage.getItem("adminToken");
+        const token = localStorage.getItem("authToken");
 
         try {
 

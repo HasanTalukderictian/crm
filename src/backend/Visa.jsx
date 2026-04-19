@@ -729,8 +729,6 @@ const Visa = () => {
     // Delete Review
 
 
-
-
     const deleteReview = async (id) => {
         if (!window.confirm("Are you sure you want to delete this review?")) return;
 
@@ -764,9 +762,6 @@ const Visa = () => {
             }
         }
     };
-
-
-
 
 
 
