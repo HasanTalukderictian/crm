@@ -39,7 +39,7 @@ const Visa = () => {
     const [date, setDate] = useState("");
     const [assetValuation, setAssetValuation] = useState("");
     const [salaryAmount, setSalaryAmount] = useState("");
-    const [memberName, setMemberName] = useState("");
+    const [memberName, setMemberName] = useState(1);
 
     const [viewData, setViewData] = useState(null);
     const [viewModal, setViewModal] = useState(false);
@@ -586,13 +586,13 @@ const Visa = () => {
 
         setAssetValuation("");
         setSalaryAmount("");
-        setMemberName(1);
+        setMemberName("1");
 
         setNote("");
         setRemainderDays("");
         setMissingFile("");
         setProfessionName("");
-        
+
 
         setEditId(null);
         setViewData(null);
@@ -626,102 +626,181 @@ const Visa = () => {
 
     //Submit function 
 
+    // const submitReview = async () => {
+
+    //     if (phone.length !== 11) {
+    //         toast.error("Customer Phone number must be exactly 11 digits");
+    //         return;
+    //     }
+
+    //     if (passport.length < 6 || passport.length > 10) {
+    //         toast.error("Passport Number must be between 6 and 10 digits");
+    //         return;
+    //     }
+
+    //     const memberCount = parseInt(memberName);
+
+    //     if (isNaN(memberCount) || memberCount < 1) {
+    //         toast.error("Member count must be at least 1");
+    //         return;
+    //     }
+
+    //     if (phone.length !== 11) {
+    //         toast.error("Customer Phone number must be exactly 11 digits");
+    //         return;
+    //     }
+
+
+    //     const formData = new FormData();
+
+    //     formData.append("name", name);
+    //     formData.append("phone", phone);
+    //     formData.append("passport", passport);
+    //     formData.append("invoice", invoice);
+    //     formData.append("country", country);
+    //     formData.append("salesPerson", salesPerson);
+    //     formData.append("date", date);
+    //     formData.append("assetValuation", assetValuation || 0);
+    //     formData.append("salaryAmount", salaryAmount || 0);
+    //     formData.append("member", memberName);
+    //     formData.append("applicantType", applicantType);
+    //     formData.append("status", status);
+    //     formData.append("remainder_days", remainderDays);
+    //     formData.append("note", note);
+    //     formData.append("profession_name", professionName);
+    //     formData.append("missing_file", missingFile);
+    //     formData.append("member", memberCount);
+
+    //     formData.append("fileChecks", JSON.stringify(fileChecks));
+
+    //     Object.entries(files).forEach(([key, file]) => {
+    //         if (file) formData.append(key, file);
+    //     });
+
+    //     try {
+
+    //         const token = localStorage.getItem("authToken");
+
+    //         let res;
+
+    //         if (editId) {
+
+    //             res = await axios.post(
+    //                 `${API_BASE}/visa-update/${editId}`,
+    //                 formData,
+    //                 {
+    //                     headers: {
+    //                         Authorization: `Bearer ${token}`
+    //                     }
+    //                 }
+    //             );
+
+    //         } else {
+
+    //             res = await axios.post(
+    //                 `${API_BASE}/add-reviews`,
+    //                 formData,
+    //                 {
+    //                     headers: {
+    //                         Authorization: `Bearer ${token}`
+    //                     }
+    //                 }
+    //             );
+
+    //         }
+
+    //         if (res.data.status) {
+
+    //             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
+
+    //             setShowModal(false);
+    //             resetForm();
+    //             setEditId(null);
+    //             fetchReviews();
+
+    //         }
+
+    //     } catch (err) {
+    //         console.error(err);
+
+    //         if (err.response?.data?.errors) {
+    //             const errors = err.response.data.errors;
+    //             const firstError = Object.values(errors)[0][0];
+    //             toast.error(firstError);
+    //         }
+    //         else if (err.response?.data?.message) {
+    //             toast.error(err.response.data.message);
+    //         }
+    //         else {
+    //             toast.error("Something went wrong!");
+    //         }
+    //     }
+    // };
+
+
     const submitReview = async () => {
+    // Validation
+    if (phone.length !== 11) {
+        toast.error("Phone number must be exactly 11 digits");
+        return;
+    }
 
-        if (phone.length !== 11) {
-            toast.error("Customer Phone number must be exactly 11 digits");
-            return;
+    if (passport.length < 6 || passport.length > 10) {
+        toast.error("Passport Number must be 6-10 characters");
+        return;
+    }
+
+    const memberCount = parseInt(memberName);
+    if (isNaN(memberCount) || memberCount < 1) {
+        toast.error("Member count must be at least 1");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("phone", phone);
+    formData.append("passport", passport);
+    formData.append("invoice", invoice);
+    formData.append("country", country);
+    formData.append("salesPerson", salesPerson);
+    formData.append("date", date);
+    formData.append("assetValuation", parseFloat(assetValuation) || 0);
+    formData.append("salaryAmount", parseFloat(salaryAmount) || 0);
+    formData.append("member", memberCount); // Final member count
+    formData.append("applicantType", applicantType);
+    formData.append("status", status);
+    formData.append("remainder_days", remainderDays || 0);
+    formData.append("note", note);
+    formData.append("profession_name", professionName);
+    formData.append("missing_file", missingFile);
+    formData.append("fileChecks", JSON.stringify(fileChecks));
+
+    // Append Files
+    Object.entries(files).forEach(([key, file]) => {
+        if (file instanceof File) { // নিশ্চিত করুন এটি একটি ফাইল অবজেক্ট
+            formData.append(key, file);
         }
+    });
 
-        if (passport.length < 6 || passport.length > 10) {
-            toast.error("Passport Number must be between 6 and 10 digits");
-            return;
-        }
-
-        const formData = new FormData();
-
-        formData.append("name", name);
-        formData.append("phone", phone);
-        formData.append("passport", passport);
-        formData.append("invoice", invoice);
-        formData.append("country", country);
-        formData.append("salesPerson", salesPerson);
-        formData.append("date", date);
-        formData.append("assetValuation", assetValuation || 0);
-        formData.append("salaryAmount", salaryAmount || 0);
-        formData.append("member", memberName);
-        formData.append("applicantType", applicantType);
-        formData.append("status", status);
-        formData.append("remainder_days", remainderDays);
-        formData.append("note", note);
-        formData.append("profession_name", professionName);
-        formData.append("missing_file", missingFile);
-
-        formData.append("fileChecks", JSON.stringify(fileChecks));
-
-        Object.entries(files).forEach(([key, file]) => {
-            if (file) formData.append(key, file);
+    try {
+        const token = localStorage.getItem("authToken");
+        const url = editId ? `${API_BASE}/visa-update/${editId}` : `${API_BASE}/add-reviews`;
+        
+        const res = await axios.post(url, formData, {
+            headers: { Authorization: `Bearer ${token}` }
         });
 
-        try {
-
-            const token = localStorage.getItem("authToken");
-
-            let res;
-
-            if (editId) {
-
-                res = await axios.post(
-                    `${API_BASE}/visa-update/${editId}`,
-                    formData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-            } else {
-
-                res = await axios.post(
-                    `${API_BASE}/add-reviews`,
-                    formData,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
-
-            }
-
-            if (res.data.status) {
-
-                toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-                setShowModal(false);
-                resetForm();
-                setEditId(null);
-                fetchReviews();
-
-            }
-
-        } catch (err) {
-            console.error(err);
-
-            if (err.response?.data?.errors) {
-                const errors = err.response.data.errors;
-                const firstError = Object.values(errors)[0][0];
-                toast.error(firstError);
-            }
-            else if (err.response?.data?.message) {
-                toast.error(err.response.data.message);
-            }
-            else {
-                toast.error("Something went wrong!");
-            }
+        if (res.data.status) {
+            toast.success(editId ? "Updated!" : "Applied!");
+            setShowModal(false);
+            resetForm();
+            fetchReviews();
         }
-    };
+    } catch (err) {
+        const errorMsg = err.response?.data?.message || "Something went wrong!";
+        toast.error(errorMsg);
+    }
+};
 
 
 
@@ -1146,40 +1225,38 @@ const Visa = () => {
                                         />
                                     </div>
 
-                                    <div className="col-md-6 mb-3">
-                                        <label className="form-label">Member Number</label>
+                                   <div className="col-md-6 mb-3">
+    <label className="form-label">Member Number</label>
+    <div className="d-flex align-items-center justify-content-center gap-3">
+        
+        {/* Minus Button */}
+        <button
+            type="button"
+            className="btn rounded-circle border d-flex align-items-center justify-content-center"
+            style={{ width: "40px", height: "40px" }}
+            onClick={() => setMemberName((prev) => Math.max(1, Number(prev) - 1))}
+        >
+            <i className="bi bi-dash"></i> 
+            {/* এখানে আগে "-" ছিল, সেটা মুছে ফেলা হয়েছে */}
+        </button>
 
-                                        <div className="d-flex align-items-center justify-content-center gap-3">
+        <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center", fontWeight: "bold" }}>
+            {memberName}
+        </span>
 
-                                            {/* Minus Button */}
-                                            <button
-                                                type="button"
-                                                className="btn rounded-circle border"
-                                                style={{ width: "40px", height: "40px" }}
-                                                onClick={() => {
-                                                    setMemberName((prev) => Math.max(1, Number(prev || 1) - 1));
-                                                }}
-                                            >
-                                                -
-                                            </button>
-
-                                            <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center" }}>
-                                                {memberName || 1}
-                                            </span>
-
-                                            <button
-                                                type="button"
-                                                className="btn rounded-circle border"
-                                                style={{ width: "40px", height: "40px" }}
-                                                onClick={() => {
-                                                    setMemberName((prev) => Number(prev || 1) + 1);
-                                                }}
-                                            >
-                                                +
-                                            </button>
-
-                                        </div>
-                                    </div>
+        {/* Plus Button */}
+        <button
+            type="button"
+            className="btn rounded-circle border d-flex align-items-center justify-content-center"
+            style={{ width: "40px", height: "40px" }}
+            onClick={() => setMemberName((prev) => Number(prev) + 1)}
+        >
+            <i className="bi bi-plus"></i>
+            {/* এখানে আগে "+" ছিল, সেটা মুছে ফেলা হয়েছে */}
+        </button>
+        
+    </div>
+</div>
 
 
 
