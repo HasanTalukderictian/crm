@@ -608,7 +608,7 @@ const Dashboard = () => {
                     {/* Header */}
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <h5 className="mb-0 fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
-                            Top 5 Performer Visa Sales
+                            Top 5 Visa Sales Performer 
                         </h5>
                         <div style={{
                             backgroundColor: "#ffc107",

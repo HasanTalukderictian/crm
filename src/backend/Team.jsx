@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import Footer from "./Footer";
@@ -20,30 +21,26 @@ const Team = () => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const userRole = localStorage.getItem("userRole");
+  // Search and Filter States
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("");
 
+  const userRole = localStorage.getItem("userRole");
   const [editId, setEditId] = useState(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-
-
   const userId = Number(localStorage.getItem("userId"));
-
 
   const handleEdit = (item) => {
     setEditId(item.id);
     setName(item.name);
     setDepartmentId(item.department_id);
-    setPreview(item.image); // existing image
+    setPreview(item.image); 
     setShowModal(true);
   };
-
-
-
-
 
   const updateBanner = async () => {
     if (!departmentId) {
@@ -73,7 +70,6 @@ const Team = () => {
       }
     } catch (err) {
       console.error(err);
-
       if (err.response?.data?.errors?.name) {
         toast.error(err.response.data.errors.name[0]);
       } else if (err.response?.data?.message) {
@@ -84,7 +80,6 @@ const Team = () => {
     }
   };
 
-  // Fetch team data
   const fetchData = () => {
     axios
       .get(`${API_BASE}/get-team`)
@@ -94,7 +89,6 @@ const Team = () => {
       .finally(() => setLoading(false));
   };
 
-  // Fetch departments for dropdown
   const fetchDepartments = () => {
     axios
       .get(`${API_BASE}/departments`)
@@ -109,30 +103,29 @@ const Team = () => {
     fetchDepartments();
   }, []);
 
-  // Pagination logic
+  // Filter Logic: Search by Name & Filter by Department ID
+  const filteredData = data.filter((item) => {
+    const matchesName = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDept = filterDepartment === "" || String(item.department_id) === String(filterDepartment);
+    return matchesName && matchesDept;
+  });
+
+  // Pagination logic based on filtered data
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Next page
   const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
-  // Previous page
   const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
 
-  // Image Handling
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     setImage(file);
@@ -154,7 +147,6 @@ const Team = () => {
     setEditId(null);
   };
 
-  // Submit Team member
   const submitBanner = async () => {
     if (!departmentId) {
       toast.error("Please select a department");
@@ -179,7 +171,6 @@ const Team = () => {
       }
     } catch (err) {
       console.error(err);
-
       if (err.response?.data?.errors?.name) {
         toast.error(err.response.data.errors.name[0]);
       } else if (err.response?.data?.message) {
@@ -190,7 +181,6 @@ const Team = () => {
     }
   };
 
-  // Delete
   const deleteBanner = async (id) => {
     if (!window.confirm("Are you sure you want to delete this team member?")) return;
 
@@ -206,9 +196,6 @@ const Team = () => {
     }
   };
 
-
-
-
   return (
     <Layout>
       <div className="d-flex">
@@ -223,7 +210,7 @@ const Team = () => {
                   className="btn btn-success"
                   onClick={() => {
                     setEditId(null);
-                    resetForm();   // ✅ clear previous data
+                    resetForm();
                     setShowModal(true);
                   }}
                 >
@@ -231,6 +218,40 @@ const Team = () => {
                 </button>
               )}
             </div>
+
+            {/* --- Search and Filter Section --- */}
+            <div className="row mb-3 g-2">
+              <div className="col-md-4">
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search by Name..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // Reset pagination on search
+                  }}
+                />
+              </div>
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={filterDepartment}
+                  onChange={(e) => {
+                    setFilterDepartment(e.target.value);
+                    setCurrentPage(1); // Reset pagination on filter
+                  }}
+                >
+                  <option value="">All Departments</option>
+                  {departments.map((dep) => (
+                    <option key={dep.id} value={dep.id}>
+                      {dep.department}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            {/* --------------------------------- */}
 
             {loading ? (
               <p>Loading...</p>
@@ -264,17 +285,13 @@ const Team = () => {
                               )}
                             </td>
                             {userRole === "admin" && (
-
                               <td className="d-flex gap-2">
-                                {/* Edit Button */}
                                 <button
                                   className="btn btn-warning btn-sm me-2"
                                   onClick={() => handleEdit(item)}
                                 >
                                   <i className="bi bi-pencil-square"></i>
                                 </button>
-
-                                {/* Delete Button */}
                                 <button
                                   className="btn btn-danger btn-sm"
                                   onClick={() => deleteBanner(item.id)}
@@ -282,7 +299,6 @@ const Team = () => {
                                   <i className="bi bi-trash"></i>
                                 </button>
                               </td>
-
                             )}
                           </tr>
                         ))
@@ -297,12 +313,10 @@ const Team = () => {
                   </table>
                 </div>
 
-                {/* Pagination Section - Centered */}
                 {totalPages > 1 && (
                   <div className="d-flex justify-content-center mt-4">
                     <nav>
                       <ul className="pagination align-items-center gap-1 mb-0">
-                        {/* Previous Button */}
                         <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
                           <button
                             className="page-link d-flex align-items-center justify-content-center"
@@ -310,17 +324,14 @@ const Team = () => {
                             style={{ minWidth: "40px", height: "40px" }}
                             disabled={currentPage === 1}
                           >
-                            <i className="bi bi-chevron-left"></i> {/* < icon */}
+                            <i className="bi bi-chevron-left"></i>
                           </button>
                         </li>
 
-                        {/* Page Numbers */}
                         {Array.from({ length: totalPages }, (_, i) => {
-                          // Show limited page numbers (optional: show 5 pages at a time)
                           const pageNum = i + 1;
                           const maxVisible = 5;
                           const halfVisible = Math.floor(maxVisible / 2);
-
                           let startPage = Math.max(1, currentPage - halfVisible);
                           let endPage = Math.min(totalPages, startPage + maxVisible - 1);
 
@@ -347,7 +358,6 @@ const Team = () => {
                           return null;
                         })}
 
-                        {/* Next Button */}
                         <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
                           <button
                             className="page-link d-flex align-items-center justify-content-center"
@@ -355,7 +365,7 @@ const Team = () => {
                             style={{ minWidth: "40px", height: "40px" }}
                             disabled={currentPage === totalPages}
                           >
-                            <i className="bi bi-chevron-right"></i> {/* > icon */}
+                            <i className="bi bi-chevron-right"></i>
                           </button>
                         </li>
                       </ul>
@@ -363,9 +373,8 @@ const Team = () => {
                   </div>
                 )}
 
-                {/* Optional: Showing entries info */}
                 <div className="text-center text-muted mt-2">
-                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, data.length)} of {data.length} entries
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredData.length)} of {filteredData.length} entries
                 </div>
               </>
             )}
@@ -375,7 +384,7 @@ const Team = () => {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modal Section (Code remains the same) */}
       {showModal && (
         <div className="modal fade show" style={{ display: "block", background: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog">
