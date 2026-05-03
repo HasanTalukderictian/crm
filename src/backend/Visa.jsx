@@ -23,18 +23,15 @@ const Visa = () => {
 
     const today = new Date();
 
-
-
     const userRole = localStorage.getItem("userRole"); // "admin" or "user"
     const userId = Number(localStorage.getItem("userId"));
-
 
     // Text / number fields
     const [name, setName] = useState("");
     const [phone, setPhone] = useState("");
     const [passport, setPassport] = useState("");
     const [invoice, setInvoice] = useState("");
-    const [country, setCountry] = useState("");
+    const [country, setCountry] = useState([]);
     const [salesPerson, setSalesPerson] = useState("");
     const [date, setDate] = useState("");
     const [assetValuation, setAssetValuation] = useState("");
@@ -65,11 +62,25 @@ const Visa = () => {
     const [loadingMsg, setLoadingMsg] = useState(false);
 
 
+    const getCountries = (item) => {
+        try {
+            const ids = typeof item.country_id === "string"
+                ? JSON.parse(item.country_id)
+                : item.country_id;
 
+            if (!Array.isArray(ids) || ids.length === 0) return "N/A";
 
+            const names = ids.map(id => {
+                const country = countries.find(c => c.id == id);
+                return country ? country.name : null;
+            }).filter(Boolean);
 
+            return names.length ? names.join(", ") : "N/A";
 
-
+        } catch (e) {
+            return "N/A";
+        }
+    };
 
     // Files grouped in one state object
     const [files, setFiles] = useState({
@@ -113,6 +124,8 @@ const Visa = () => {
         blankOfficePad: false,
         renewalTradeLicense: false,
         memorandumLimited: false,
+        fatherNid: false,
+        motherNid: false,
     });
 
     const [preview, setPreview] = useState(null);
@@ -330,40 +343,81 @@ const Visa = () => {
     }, [viewData]);
 
     // Fetch Reviews
+
+    // const fetchReviews = async () => {
+    //     setLoading(true);
+
+    //     try {
+    //         const token = localStorage.getItem("authToken");
+
+    //         const res = await axios.get(`${API_BASE}/get-reviews`, {
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`,
+    //                 Accept: "application/json"
+    //             }
+    //         });
+
+    //         if (res.data.status) setReviews(res.data.data);
+
+    //     } catch (err) {
+    //         console.error(err);
+
+    //         if (err.response?.data?.errors) {
+    //             const errors = err.response.data.errors;
+    //             const firstError = Object.values(errors)[0][0];
+    //             toast.error(firstError);
+    //         }
+    //         else if (err.response?.data?.message) {
+    //             toast.error(err.response.data.message);
+    //         }
+    //         else {
+    //             toast.error("Something went wrong!");
+    //         }
+
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
     const fetchReviews = async () => {
-        setLoading(true);
+    setLoading(true);
 
-        try {
-            const token = localStorage.getItem("authToken");
+    try {
+        const token = localStorage.getItem("authToken");
 
-            const res = await axios.get(`${API_BASE}/get-reviews`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/json"
-                }
-            });
+        console.log("TOKEN:", token);
 
-            if (res.data.status) setReviews(res.data.data);
-
-        } catch (err) {
-            console.error(err);
-
-            if (err.response?.data?.errors) {
-                const errors = err.response.data.errors;
-                const firstError = Object.values(errors)[0][0];
-                toast.error(firstError);
+        const res = await axios.get(`${API_BASE}/get-reviews`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/json"
             }
-            else if (err.response?.data?.message) {
-                toast.error(err.response.data.message);
-            }
-            else {
-                toast.error("Something went wrong!");
-            }
+        });
 
-        } finally {
-            setLoading(false);
+        console.log("API RESPONSE:", res.data);
+
+        if (res.data?.status) {
+            setReviews(res.data.data);
+        } else {
+            toast.error(res.data?.message || "No data found");
         }
-    };
+
+    } catch (err) {
+        console.error("FETCH REVIEWS ERROR:", err);
+
+        if (err.response) {
+            console.log("STATUS:", err.response.status);
+            console.log("DATA:", err.response.data);
+
+            toast.error(err.response.data?.message || "Server error");
+        } else {
+            toast.error("Network error / API not reachable");
+        }
+
+    } finally {
+        setLoading(false);
+    }
+};
 
     const viewVisa = async (id) => {
         try {
@@ -399,6 +453,8 @@ const Visa = () => {
     };
 
 
+
+
     const calculateRemainingDays = (data) => {
         if (!data?.date || !data?.remainder_days) return "N/A";
 
@@ -415,72 +471,136 @@ const Visa = () => {
 
 
 
+    // const editVisa = async (id) => {
+    //     try {
+
+    //         const token = localStorage.getItem("authToken");
+
+    //         const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`
+    //             }
+    //         });
+
+    //         if (res.data.status) {
+
+    //             const data = res.data.data;
+
+    //             setViewData(data);
+
+    //             setEditId(data.id);
+    //             setName(data.name);
+    //             setPhone(data.phone);
+    //             setPassport(data.passport);
+    //             setInvoice(data.invoice);
+    //             setCountry(data.country_id);
+    //             setSalesPerson(data.team_id);
+    //             setDate(data.date);
+    //             setAssetValuation(data.asset_valuation);
+    //             setSalaryAmount(data.salary_amount);
+    //             setApplicantType(data.applicant_type);
+    //             setMemberName(data.member || "");
+    //             setNote(data.note || "");
+
+    //             // 🔥 ✅ Use your existing function
+    //             const remainingText = calculateRemainingDays(data);
+
+    //             // 👉 Option 1: show text (recommended)
+    //             // setRemainderDays(remainingText);
+
+    //             // 👉 Option 2: only number (if needed)
+    //             const remainingNumber = parseInt(remainingText) || 0;
+    //             setRemainderDays(remainingNumber);
+
+    //             // Preview image
+    //             if (data.image) {
+    //                 setPreview(data.image);
+    //             }
+
+    //             setShowModal(true);
+    //         }
+
+    //     } catch (err) {
+    //         console.error(err);
+
+    //         if (err.response?.data?.errors) {
+    //             const errors = err.response.data.errors;
+    //             const firstError = Object.values(errors)[0][0];
+    //             toast.error(firstError);
+    //         }
+    //         else if (err.response?.data?.message) {
+    //             toast.error(err.response.data.message);
+    //         }
+    //         else {
+    //             toast.error("Something went wrong!");
+    //         }
+    //     }
+    // };
+   
     const editVisa = async (id) => {
-        try {
+    try {
+        const token = localStorage.getItem("authToken");
 
-            const token = localStorage.getItem("authToken");
+        console.log("EDIT ID:", id);
+        console.log("TOKEN:", token);
 
-            const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            if (res.data.status) {
-
-                const data = res.data.data;
-
-                setViewData(data);
-
-                setEditId(data.id);
-                setName(data.name);
-                setPhone(data.phone);
-                setPassport(data.passport);
-                setInvoice(data.invoice);
-                setCountry(data.country_id);
-                setSalesPerson(data.team_id);
-                setDate(data.date);
-                setAssetValuation(data.asset_valuation);
-                setSalaryAmount(data.salary_amount);
-                setApplicantType(data.applicant_type);
-                setMemberName(data.member || "");
-                setNote(data.note || "");
-
-                // 🔥 ✅ Use your existing function
-                const remainingText = calculateRemainingDays(data);
-
-                // 👉 Option 1: show text (recommended)
-                // setRemainderDays(remainingText);
-
-                // 👉 Option 2: only number (if needed)
-                const remainingNumber = parseInt(remainingText) || 0;
-                setRemainderDays(remainingNumber);
-
-                // Preview image
-                if (data.image) {
-                    setPreview(data.image);
-                }
-
-                setShowModal(true);
+        const res = await axios.get(`${API_BASE}/visa-view/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
+        });
 
-        } catch (err) {
-            console.error(err);
+        console.log("API RESPONSE:", res.data);
 
-            if (err.response?.data?.errors) {
-                const errors = err.response.data.errors;
-                const firstError = Object.values(errors)[0][0];
-                toast.error(firstError);
-            }
-            else if (err.response?.data?.message) {
-                toast.error(err.response.data.message);
-            }
-            else {
-                toast.error("Something went wrong!");
-            }
+        const data = res.data?.data || res.data;
+
+        if (!data) {
+            toast.error("No data found from API");
+            return;
         }
-    };
 
+        setViewData(data);
+        setEditId(data.id);
+
+        setName(data.name || "");
+        setPhone(data.phone || "");
+        setPassport(data.passport || "");
+        setInvoice(data.invoice || "");
+
+        // country safe parse
+        let parsedCountry = [];
+        try {
+            parsedCountry =
+                typeof data.country_id === "string"
+                    ? JSON.parse(data.country_id)
+                    : data.country_id || [];
+        } catch (e) {
+            parsedCountry = [];
+        }
+
+        setCountry(parsedCountry);
+
+        setSalesPerson(data.team_id || "");
+        setDate(data.date || "");
+        setAssetValuation(data.asset_valuation || "");
+        setSalaryAmount(data.salary_amount || "");
+        setApplicantType(data.applicant_type || "");
+        setMemberName(data.member || "");
+        setNote(data.note || "");
+
+        setShowModal(true);
+
+    } catch (err) {
+        console.error("EDIT ERROR:", err);
+
+        if (err.response) {
+            console.log("ERROR RESPONSE:", err.response.data);
+            toast.error(err.response.data.message || "Server error");
+        } else {
+            toast.error("Network error / API not reachable");
+        }
+    }
+};
 
     useEffect(() => {
         fetchTeam();
@@ -544,12 +664,7 @@ const Visa = () => {
         return url.split("/").pop();
     };
 
-    // Handle file changes
-    // const handleFileChange = (field, file) => {
-    //     setFiles({ ...files, [field]: file });
 
-    //     if (field === "image") setPreview(URL.createObjectURL(file));
-    // };
 
 
     const handleFileChange = (field, file) => {
@@ -560,13 +675,12 @@ const Visa = () => {
     };
 
 
-    const handleCheckChange = (field) => {
+    const handleCheckChange = (key) => {
         setFileChecks((prev) => ({
             ...prev,
-            [field]: !prev[field]
+            [key]: !prev[key],
         }));
     };
-
 
 
 
@@ -624,183 +738,72 @@ const Visa = () => {
 
 
 
-    //Submit function 
-
-    // const submitReview = async () => {
-
-    //     if (phone.length !== 11) {
-    //         toast.error("Customer Phone number must be exactly 11 digits");
-    //         return;
-    //     }
-
-    //     if (passport.length < 6 || passport.length > 10) {
-    //         toast.error("Passport Number must be between 6 and 10 digits");
-    //         return;
-    //     }
-
-    //     const memberCount = parseInt(memberName);
-
-    //     if (isNaN(memberCount) || memberCount < 1) {
-    //         toast.error("Member count must be at least 1");
-    //         return;
-    //     }
-
-    //     if (phone.length !== 11) {
-    //         toast.error("Customer Phone number must be exactly 11 digits");
-    //         return;
-    //     }
-
-
-    //     const formData = new FormData();
-
-    //     formData.append("name", name);
-    //     formData.append("phone", phone);
-    //     formData.append("passport", passport);
-    //     formData.append("invoice", invoice);
-    //     formData.append("country", country);
-    //     formData.append("salesPerson", salesPerson);
-    //     formData.append("date", date);
-    //     formData.append("assetValuation", assetValuation || 0);
-    //     formData.append("salaryAmount", salaryAmount || 0);
-    //     formData.append("member", memberName);
-    //     formData.append("applicantType", applicantType);
-    //     formData.append("status", status);
-    //     formData.append("remainder_days", remainderDays);
-    //     formData.append("note", note);
-    //     formData.append("profession_name", professionName);
-    //     formData.append("missing_file", missingFile);
-    //     formData.append("member", memberCount);
-
-    //     formData.append("fileChecks", JSON.stringify(fileChecks));
-
-    //     Object.entries(files).forEach(([key, file]) => {
-    //         if (file) formData.append(key, file);
-    //     });
-
-    //     try {
-
-    //         const token = localStorage.getItem("authToken");
-
-    //         let res;
-
-    //         if (editId) {
-
-    //             res = await axios.post(
-    //                 `${API_BASE}/visa-update/${editId}`,
-    //                 formData,
-    //                 {
-    //                     headers: {
-    //                         Authorization: `Bearer ${token}`
-    //                     }
-    //                 }
-    //             );
-
-    //         } else {
-
-    //             res = await axios.post(
-    //                 `${API_BASE}/add-reviews`,
-    //                 formData,
-    //                 {
-    //                     headers: {
-    //                         Authorization: `Bearer ${token}`
-    //                     }
-    //                 }
-    //             );
-
-    //         }
-
-    //         if (res.data.status) {
-
-    //             toast.success(editId ? "Visa updated successfully!" : "Visa applied successfully!");
-
-    //             setShowModal(false);
-    //             resetForm();
-    //             setEditId(null);
-    //             fetchReviews();
-
-    //         }
-
-    //     } catch (err) {
-    //         console.error(err);
-
-    //         if (err.response?.data?.errors) {
-    //             const errors = err.response.data.errors;
-    //             const firstError = Object.values(errors)[0][0];
-    //             toast.error(firstError);
-    //         }
-    //         else if (err.response?.data?.message) {
-    //             toast.error(err.response.data.message);
-    //         }
-    //         else {
-    //             toast.error("Something went wrong!");
-    //         }
-    //     }
-    // };
-
 
     const submitReview = async () => {
-    // Validation
-    if (phone.length !== 11) {
-        toast.error("Phone number must be exactly 11 digits");
-        return;
-    }
-
-    if (passport.length < 6 || passport.length > 10) {
-        toast.error("Passport Number must be 6-10 characters");
-        return;
-    }
-
-    const memberCount = parseInt(memberName);
-    if (isNaN(memberCount) || memberCount < 1) {
-        toast.error("Member count must be at least 1");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("phone", phone);
-    formData.append("passport", passport);
-    formData.append("invoice", invoice);
-    formData.append("country", country);
-    formData.append("salesPerson", salesPerson);
-    formData.append("date", date);
-    formData.append("assetValuation", parseFloat(assetValuation) || 0);
-    formData.append("salaryAmount", parseFloat(salaryAmount) || 0);
-    formData.append("member", memberCount); // Final member count
-    formData.append("applicantType", applicantType);
-    formData.append("status", status);
-    formData.append("remainder_days", remainderDays || 0);
-    formData.append("note", note);
-    formData.append("profession_name", professionName);
-    formData.append("missing_file", missingFile);
-    formData.append("fileChecks", JSON.stringify(fileChecks));
-
-    // Append Files
-    Object.entries(files).forEach(([key, file]) => {
-        if (file instanceof File) { // নিশ্চিত করুন এটি একটি ফাইল অবজেক্ট
-            formData.append(key, file);
+        // Validation
+        if (phone.length !== 11) {
+            toast.error("Phone number must be exactly 11 digits");
+            return;
         }
-    });
 
-    try {
-        const token = localStorage.getItem("authToken");
-        const url = editId ? `${API_BASE}/visa-update/${editId}` : `${API_BASE}/add-reviews`;
-        
-        const res = await axios.post(url, formData, {
-            headers: { Authorization: `Bearer ${token}` }
+        if (passport.length < 6 || passport.length > 10) {
+            toast.error("Passport Number must be 6-10 characters");
+            return;
+        }
+
+        const memberCount = parseInt(memberName);
+        if (isNaN(memberCount) || memberCount < 1) {
+            toast.error("Member count must be at least 1");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("phone", phone);
+        formData.append("passport", passport);
+        formData.append("invoice", invoice);
+        country.forEach((c, index) => {
+            formData.append(`country[${index}]`, c);
+        });
+        formData.append("salesPerson", salesPerson);
+        formData.append("date", date);
+        formData.append("assetValuation", parseFloat(assetValuation) || 0);
+        formData.append("salaryAmount", parseFloat(salaryAmount) || 0);
+        formData.append("member", memberCount); // Final member count
+        formData.append("applicantType", applicantType);
+        formData.append("status", status);
+        formData.append("remainder_days", remainderDays || 0);
+        formData.append("note", note);
+        formData.append("profession_name", professionName);
+        formData.append("missing_file", missingFile);
+        formData.append("fileChecks", JSON.stringify(fileChecks));
+
+        // Append Files
+        Object.entries(files).forEach(([key, file]) => {
+            if (file instanceof File) { // নিশ্চিত করুন এটি একটি ফাইল অবজেক্ট
+                formData.append(key, file);
+            }
         });
 
-        if (res.data.status) {
-            toast.success(editId ? "Updated!" : "Applied!");
-            setShowModal(false);
-            resetForm();
-            fetchReviews();
+        try {
+            const token = localStorage.getItem("authToken");
+            const url = editId ? `${API_BASE}/visa-update/${editId}` : `${API_BASE}/add-reviews`;
+
+            const res = await axios.post(url, formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (res.data.status) {
+                toast.success(editId ? "Updated!" : "Applied!");
+                setShowModal(false);
+                resetForm();
+                fetchReviews();
+            }
+        } catch (err) {
+            const errorMsg = err.response?.data?.message || "Something went wrong!";
+            toast.error(errorMsg);
         }
-    } catch (err) {
-        const errorMsg = err.response?.data?.message || "Something went wrong!";
-        toast.error(errorMsg);
-    }
-};
+    };
 
 
 
@@ -1000,7 +1003,7 @@ const Visa = () => {
                                                     <td>{review.passport}</td>
                                                     <td>{review.invoice}</td>
                                                     <td>{review.member}</td>
-                                                    <td>{review.country?.name}</td>
+                                                    <td>{getCountries(review)}</td>
                                                     <td>{review.team?.name}</td>
                                                     <td>{review.date}</td>
                                                     <td>
@@ -1189,8 +1192,12 @@ const Visa = () => {
                                         <label className="form-label">Country</label>
                                         <select
                                             className="form-control"
+                                            multiple   // ✅ এটা add করতে হবে
                                             value={country}
-                                            onChange={(e) => setCountry(e.target.value)}
+                                            onChange={(e) => {
+                                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                                setCountry(selected);
+                                            }}
                                         >
                                             <option value="">Select Country</option>
                                             {countries.map((c) => (
@@ -1225,38 +1232,38 @@ const Visa = () => {
                                         />
                                     </div>
 
-                                   <div className="col-md-6 mb-3">
-    <label className="form-label">Member Number</label>
-    <div className="d-flex align-items-center justify-content-center gap-3">
-        
-        {/* Minus Button */}
-        <button
-            type="button"
-            className="btn rounded-circle border d-flex align-items-center justify-content-center"
-            style={{ width: "40px", height: "40px" }}
-            onClick={() => setMemberName((prev) => Math.max(1, Number(prev) - 1))}
-        >
-            <i className="bi bi-dash"></i> 
-            {/* এখানে আগে "-" ছিল, সেটা মুছে ফেলা হয়েছে */}
-        </button>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Member Number</label>
+                                        <div className="d-flex align-items-center justify-content-center gap-3">
 
-        <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center", fontWeight: "bold" }}>
-            {memberName}
-        </span>
+                                            {/* Minus Button */}
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border d-flex align-items-center justify-content-center"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => setMemberName((prev) => Math.max(1, Number(prev) - 1))}
+                                            >
+                                                <i className="bi bi-dash"></i>
+                                                {/* এখানে আগে "-" ছিল, সেটা মুছে ফেলা হয়েছে */}
+                                            </button>
 
-        {/* Plus Button */}
-        <button
-            type="button"
-            className="btn rounded-circle border d-flex align-items-center justify-content-center"
-            style={{ width: "40px", height: "40px" }}
-            onClick={() => setMemberName((prev) => Number(prev) + 1)}
-        >
-            <i className="bi bi-plus"></i>
-            {/* এখানে আগে "+" ছিল, সেটা মুছে ফেলা হয়েছে */}
-        </button>
-        
-    </div>
-</div>
+                                            <span style={{ fontSize: "18px", minWidth: "20px", textAlign: "center", fontWeight: "bold" }}>
+                                                {memberName}
+                                            </span>
+
+                                            {/* Plus Button */}
+                                            <button
+                                                type="button"
+                                                className="btn rounded-circle border d-flex align-items-center justify-content-center"
+                                                style={{ width: "40px", height: "40px" }}
+                                                onClick={() => setMemberName((prev) => Number(prev) + 1)}
+                                            >
+                                                <i className="bi bi-plus"></i>
+                                                {/* এখানে আগে "+" ছিল, সেটা মুছে ফেলা হয়েছে */}
+                                            </button>
+
+                                        </div>
+                                    </div>
 
 
 
@@ -1471,7 +1478,7 @@ const Visa = () => {
                                     </div>
 
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label">Asset Valuation</label>
+                                        <label className="form-label">Tax Certificate</label>
                                         <div className="d-flex align-items-center gap-2 mb-1">
                                             <input
                                                 type="checkbox"
@@ -1532,6 +1539,36 @@ const Visa = () => {
                                                 Current File: {getFileName(viewData.marriage_certificate)}
                                             </small>
                                         )}
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Father NID</label>
+
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.fatherNid || false}
+                                                onChange={() => handleCheckChange("fatherNid")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
+
+
+                                    </div>
+
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">Mother NID</label>
+
+                                        <div className="d-flex align-items-center gap-2 mb-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={fileChecks.motherNid || false}
+                                                onChange={() => handleCheckChange("motherNid")}
+                                            />
+                                            <small>Include in SMS</small>
+                                        </div>
+
+
                                     </div>
 
 
@@ -1841,9 +1878,14 @@ const Visa = () => {
 
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Country</label>
-                                        <input className="form-control" value={viewData.country?.name} readOnly />
-                                    </div>
 
+                                        <div className="form-control" style={{ minHeight: "38px" }}>
+                                            {viewData.countries?.length > 0
+                                                ? viewData.countries.map((c) => c.name).join(", ")
+                                                : "N/A"
+                                            }
+                                        </div>
+                                    </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label">Sales Person</label>
                                         <input className="form-control" value={viewData.team?.name} readOnly />
@@ -1916,6 +1958,8 @@ const Visa = () => {
                                     {renderFile(viewData.tin_certificate, "TIN Certificate")}
                                     {renderFile(viewData.credit_card_copy, "Credit Card Copy")}
                                     {renderFile(viewData.covid_certificate, "Covid Certificate")}
+                                    {renderFile(viewData.father_nid, "Father NID")}
+                                    {renderFile(viewData.mother_nid, "Mother NID")}
 
                                     {/* ================= Job Holder ================= */}
 
