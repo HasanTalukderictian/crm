@@ -60,7 +60,7 @@ export default function Login() {
 
 
         setTimeout(() => {
-          navigate("/admin-home");
+          navigate("/admin/v1/home");
         }, 600);
       } else {
         setError(data.message);

@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Chart from "chart.js/auto";
 import { Pie } from "react-chartjs-2";
 import "../../assets/css/target.scss";
 

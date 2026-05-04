@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { 
-  FaHome, FaChartLine, FaUsers, FaSignOutAlt, 
+  FaHome, FaUsers, FaSignOutAlt, 
   FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie 
 } from 'react-icons/fa';
 
@@ -9,7 +10,46 @@ const Menu = ({ isOpen, darkMode }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 🔹 STATE
+  const [company, setCompany] = useState({});
+  const [role, setRole] = useState("admin");
 
+  // 🔹 INIT
+  useEffect(() => {
+    fetchHeader();
+    getUserRole();
+  }, []);
+
+  // 🔹 API CALL
+  const fetchHeader = async () => {
+    try {
+      const res = await axios.get("http://127.0.0.1:8000/api/get-header");
+      if (res.data.status) {
+        setCompany(res.data.data[0]);
+      }
+    } catch (err) {
+      console.log("Header API error", err);
+    }
+  };
+
+  // 🔹 ROLE FIX (based on your login system)
+  const getUserRole = () => {
+    const roleData = localStorage.getItem("userRole");
+
+    if (roleData) {
+      setRole(roleData.toLowerCase()); // safe check
+    } else {
+      setRole("admin");
+    }
+  };
+
+  // 🔹 LOGOUT
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.clear();
+    navigate("/admin");
+    window.location.reload();
+  };
 
   const sidebarStyle = {
     width: isOpen ? '250px' : '75px',
@@ -27,6 +67,7 @@ const Menu = ({ isOpen, darkMode }) => {
 
   const navItemStyle = (path, isLogout = false) => {
     const isActive = location.pathname === path;
+
     return {
       display: 'flex',
       alignItems: 'center',
@@ -50,21 +91,42 @@ const Menu = ({ isOpen, darkMode }) => {
   return (
     <div style={sidebarStyle} className="shadow-sm">
 
-      {/* Sidebar Header */}
+      {/* 🔹 HEADER */}
       <div
-        className="p-3 mb-2 border-bottom d-flex align-items-center justify-content-center"
-        style={{ minHeight: '70px' }}
+        className="p-3 mb-2 border-bottom d-flex flex-column align-items-center justify-content-center"
+        style={{ minHeight: '90px' }}
       >
-        {isOpen ? (
-          <h4 className={`mb-0 fw-bold ${darkMode ? 'text-white' : 'text-primary'}`}>
-            Admin Panel
-          </h4>
+        {/* IMAGE */}
+        {company?.image ? (
+          <img 
+            src={company.image} 
+            alt="logo" 
+            style={{
+              width: '40px',
+              height: '40px',
+              objectFit: 'cover',
+              borderRadius: '50%'
+            }}
+          />
         ) : (
           <FaThLarge size={24} className={darkMode ? 'text-white' : 'text-primary'} />
         )}
+
+        {/* TITLE */}
+        {isOpen && (
+          <>
+            <h6 className={`mt-2 mb-0 fw-bold ${darkMode ? 'text-white' : 'text-dark'}`}>
+              {company?.company_name || "Company"}
+            </h6>
+
+            <small className={darkMode ? 'text-secondary' : 'text-muted'}>
+              {role === "admin" ? "Admin Panel" : "User Panel"}
+            </small>
+          </>
+        )}
       </div>
 
-      {/* Main Navigation */}
+      {/* 🔹 MENU */}
       <div
         className="flex-grow-1 sidebar-scroll"
         style={{ overflowY: 'auto', overflowX: 'hidden' }}
@@ -80,10 +142,13 @@ const Menu = ({ isOpen, darkMode }) => {
           {isOpen && <span className="ms-3 fw-medium">Visa Management</span>}
         </Link>
 
-        <Link to="/admin/v1/user" style={navItemStyle('/admin/v1/user')} className="nav-hover-effect">
-          <FaUsers size={20} className="min-w-icon" />
-          {isOpen && <span className="ms-3 fw-medium">User Management</span>}
-        </Link>
+        {/* 🔥 ADMIN ONLY */}
+        {role === "admin" && (
+          <Link to="/admin/v1/user" style={navItemStyle('/admin/v1/user')} className="nav-hover-effect">
+            <FaUsers size={20} className="min-w-icon" />
+            {isOpen && <span className="ms-3 fw-medium">User Management</span>}
+          </Link>
+        )}
 
         <Link to="/admin/v1/sales" style={navItemStyle('/admin/v1/sales')} className="nav-hover-effect">
           <FaUserTie size={20} className="min-w-icon" />
@@ -107,9 +172,20 @@ const Menu = ({ isOpen, darkMode }) => {
 
       </div>
 
- 
+      {/* 🔹 LOGOUT (BOTTOM FIXED) */}
+      <div className="border-top py-3 mt-auto">
+        <Link
+          to="#"
+          style={navItemStyle('', true)}
+          className="nav-hover-effect"
+          onClick={handleLogout}
+        >
+          <FaSignOutAlt size={20} className="min-w-icon" />
+          {isOpen && <span className="ms-3 fw-medium">Logout</span>}
+        </Link>
+      </div>
 
-      {/* Custom Styles */}
+      {/* 🔹 STYLE */}
       <style>{`
         .nav-hover-effect:hover {
           background-color: ${darkMode ? '#2c3034' : '#f8f9fa'} !important;
