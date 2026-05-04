@@ -29,6 +29,14 @@ import Department from './backend/Department.jsx';
 import Settings from './backend/Settings.jsx';
 import Visa from './backend/Visa.jsx';
 import Target from './backend/Target.jsx';
+import HomePage from './VersionNew/Backend/HomePage.jsx';
+import DashBoard from './VersionNew/Backend/DashBoard.jsx';
+import VisaManagement from './VersionNew/Backend/VisaManagement.jsx';
+import UserManagement from './VersionNew/Backend/UserManagement.jsx';
+import SalesManagement from './VersionNew/Backend/SalesManagement.jsx';
+import DepartmentManagement from './VersionNew/Backend/DepartmentManagement.jsx';
+import CountryManagement from './VersionNew/Backend/CountryManagement.jsx';
+import TargetManagement from './VersionNew/Backend/TargetManagement.jsx';
 
 
 
@@ -66,6 +74,17 @@ function App() {
           <Route path="/admin-settings" element={<Settings />} />
           <Route path="/admin-visa" element={<Visa />} />
           <Route path="/admin-target" element={<Target />} />
+
+
+          <Route path="/admin/v1" element={<DashBoard />}>
+            <Route path="home" element={<HomePage />} />
+            <Route path="visa" element={<VisaManagement />} />
+            <Route path="user" element={<UserManagement />} />
+            <Route path="sales" element={<SalesManagement />} />
+            <Route path="dept" element={<DepartmentManagement />} />
+            <Route path="country" element={<CountryManagement />} />
+            <Route path="target" element={<TargetManagement />} />
+          </Route>
 
 
           {/* Catch-all route */}
