@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import  { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -9,6 +9,8 @@ import {
 const Menu = ({ isOpen, darkMode }) => {
   const location = useLocation();
   const navigate = useNavigate();
+ 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   // 🔹 STATE
   const [company, setCompany] = useState({});
@@ -23,7 +25,7 @@ const Menu = ({ isOpen, darkMode }) => {
   // 🔹 API CALL
   const fetchHeader = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/get-header");
+     const res = await axios.get(`${API_BASE}/get-header`);
       if (res.data.status) {
         setCompany(res.data.data[0]);
       }
