@@ -150,7 +150,7 @@ const Header = ({ toggleSidebar, darkMode, setDarkMode }) => {
         setIsDropdownOpen(false);
         
         // Redirect to login page
-        navigate("/admin");
+        navigate("/");
         toast.success("Logged out successfully!");
     };
 
