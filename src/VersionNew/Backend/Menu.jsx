@@ -172,6 +172,11 @@ const Menu = ({ isOpen, darkMode }) => {
           {isOpen && <span className="ms-3 fw-medium">Target Setting</span>}
         </Link>
 
+        <Link to="/admin/v1/refand" style={navItemStyle('/admin/v1/refand')} className="nav-hover-effect">
+          <FaBullseye size={20} className="min-w-icon" />
+          {isOpen && <span className="ms-3 fw-medium">Refand Management</span>}
+        </Link>
+
       </div>
 
       {/* 🔹 LOGOUT (BOTTOM FIXED) */}

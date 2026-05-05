@@ -37,6 +37,7 @@ import SalesManagement from './VersionNew/Backend/SalesManagement.jsx';
 import DepartmentManagement from './VersionNew/Backend/DepartmentManagement.jsx';
 import CountryManagement from './VersionNew/Backend/CountryManagement.jsx';
 import TargetManagement from './VersionNew/Backend/TargetManagement.jsx';
+import RefandManagement from './VersionNew/Backend/RefandManagement.jsx';
 
 
 
@@ -84,6 +85,7 @@ function App() {
             <Route path="dept" element={<DepartmentManagement />} />
             <Route path="country" element={<CountryManagement />} />
             <Route path="target" element={<TargetManagement />} />
+            <Route path="refand" element={<RefandManagement />} />
           </Route>
 
 
