@@ -492,7 +492,7 @@ const VisaManagement = () => {
         })
         .filter((review) => {
             const query = searchQuery.toLowerCase();
-            const matchesSearch = 
+            const matchesSearch =
                 review.invoice?.toLowerCase().includes(query) ||
                 review.name?.toLowerCase().includes(query) ||
                 review.phone?.toLowerCase().includes(query) ||
@@ -525,19 +525,19 @@ const VisaManagement = () => {
                                             Visa Management
                                         </h3>
                                         <div className="d-flex gap-2 flex-wrap">
-                                            <select 
-                                                className="form-select form-select-sm" 
-                                                value={selectedYear} 
-                                                onChange={(e) => setSelectedYear(e.target.value)} 
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={selectedYear}
+                                                onChange={(e) => setSelectedYear(e.target.value)}
                                                 style={{ width: "100px" }}
                                             >
                                                 <option value="">All Years</option>
                                                 {years.map((year) => (<option key={year} value={year}>{year}</option>))}
                                             </select>
-                                            <select 
-                                                className="form-select form-select-sm" 
-                                                value={selectedMonth} 
-                                                onChange={(e) => setSelectedMonth(e.target.value)} 
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={selectedMonth}
+                                                onChange={(e) => setSelectedMonth(e.target.value)}
                                                 style={{ width: "130px" }}
                                             >
                                                 <option value="">All Months</option>
@@ -545,12 +545,12 @@ const VisaManagement = () => {
                                             </select>
                                             <div className="input-group input-group-sm" style={{ width: "250px" }}>
                                                 <span className="input-group-text"><i className="bi bi-search"></i></span>
-                                                <input 
-                                                    type="text" 
-                                                    className="form-control" 
-                                                    placeholder="Search..." 
-                                                    value={searchQuery} 
-                                                    onChange={(e) => setSearchQuery(e.target.value)} 
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Search..."
+                                                    value={searchQuery}
+                                                    onChange={(e) => setSearchQuery(e.target.value)}
                                                 />
                                             </div>
                                             <button className="btn btn-sm btn-success" onClick={exportAllToExcel}>
@@ -610,12 +610,12 @@ const VisaManagement = () => {
                                                                 <td className="align-middle">{review.date}</td>
                                                                 <td className="align-middle">
                                                                     {review.image && (
-                                                                        <img 
-                                                                            src={review.image} 
-                                                                            width="50" 
-                                                                            height="50" 
-                                                                            style={{ objectFit: "cover", borderRadius: "50%", border: "2px solid #ddd" }} 
-                                                                            alt="customer" 
+                                                                        <img
+                                                                            src={review.image}
+                                                                            width="50"
+                                                                            height="50"
+                                                                            style={{ objectFit: "cover", borderRadius: "50%", border: "2px solid #ddd" }}
+                                                                            alt="customer"
                                                                         />
                                                                     )}
                                                                 </td>
@@ -766,11 +766,24 @@ const VisaManagement = () => {
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Country <span className="text-danger">*</span></label>
-                                        <select className="form-select" multiple size="3" value={country} onChange={(e) => { const selected = Array.from(e.target.selectedOptions, option => option.value); setCountry(selected); }}>
-                                            <option value="">Select Country</option>
-                                            {countries.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
+                                        <select
+                                            className="form-select"
+                                            multiple
+                                            style={{ height: '150px' }} // এখানে আপনার প্রয়োজনমতো height দিতে পারেন
+                                            value={country}
+                                            onChange={(e) => {
+                                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                                setCountry(selected);
+                                            }}
+                                        >
+                                            <option value="" disabled>Select Country</option>
+                                            {countries.map((c) => (
+                                                <option key={c.id} value={c.id} className="py-1 px-2 border-bottom">
+                                                    {c.name}
+                                                </option>
+                                            ))}
                                         </select>
-                                        <small className="text-muted">Hold Ctrl to select multiple</small>
+                                        <small className="text-muted"><i className="bi bi-info-circle me-1"></i>Hold Ctrl to select multiple</small>
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Sales Person</label>
@@ -841,7 +854,7 @@ const VisaManagement = () => {
                                             <textarea className="form-control" rows="2" placeholder="Write note..." value={note} onChange={(e) => setNote(e.target.value)}></textarea>
                                         </div>
                                     )}
-                                    
+
                                     <div className="col-12 mt-3">
                                         <h5 className="text-primary border-bottom pb-2">
                                             <i className="bi bi-file-earmark-person me-2"></i>Personal Documents
@@ -907,7 +920,7 @@ const VisaManagement = () => {
                                         </div>
                                         <input type="file" className="form-control" onChange={(e) => handleFileChange("nidFile", e.target.files[0])} />
                                     </div>
-                                    
+
                                     {applicantType === "job" && (
                                         <>
                                             <div className="col-12 mt-3">
@@ -965,7 +978,7 @@ const VisaManagement = () => {
                                             </div>
                                         </>
                                     )}
-                                    
+
                                     {applicantType === "business" && (
                                         <>
                                             <div className="col-12 mt-3">

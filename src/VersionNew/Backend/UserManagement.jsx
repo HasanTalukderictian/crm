@@ -484,6 +484,8 @@ const UserManagement = () => {
                                         >
                                             <option value="admin">👑 Administrator (Full Access)</option>
                                             <option value="user">👤 Regular User (Limited Access)</option>
+                                            <option value="manager">👤 Sales Manager (Limited Access)</option>
+                                             <option value="finance_manager">👤 Finance Manager (Limited Access)</option>
                                         </select>
                                     </div>
                                     <div className="d-flex justify-content-end gap-2">

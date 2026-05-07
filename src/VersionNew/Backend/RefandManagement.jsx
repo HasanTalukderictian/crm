@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { BsArrowLeft, BsArrowRight, BsSearch, BsCashStack, BsPlusCircle, BsEye } from "react-icons/bs";
+import { BsArrowLeft, BsArrowRight, BsSearch, BsCashStack, BsPlusCircle, BsEye, BsCheckCircle, BsXCircle } from "react-icons/bs";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const RefandManagement = () => {
     // --- Auth Config ---
     const token = localStorage.getItem("authToken"); 
+    const userRole = localStorage.getItem("userRole"); // Get user role from localStorage
     
     const authHeaders = {
         headers: {
@@ -19,11 +20,12 @@ const RefandManagement = () => {
     };
 
     // --- States ---
-    const [refunds, setRefunds] = useState([]); // Table data
+    const [refunds, setRefunds] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
     const [showModal, setShowModal] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     // --- Modal Form States ---
     const [invoiceNo, setInvoiceNo] = useState("");
@@ -37,9 +39,14 @@ const RefandManagement = () => {
         refundNote: ""
     });
 
+    // Check if user has approval permission
+    const hasApprovalPermission = () => {
+        const allowedRoles = ['admin', 'manager', 'finance_manager'];
+        return allowedRoles.includes(userRole?.toLowerCase());
+    };
+
     // --- Modal Control Handlers ---
     const handleOpenModal = () => {
-        // Modal ওপেন হওয়ার আগে সব স্টেট রিসেট করা হচ্ছে
         setInvoiceNo("");
         setFormData({
             customerName: "",
@@ -59,6 +66,7 @@ const RefandManagement = () => {
     // --- Fetch Table Data ---
     const fetchRefundList = async () => {
         try {
+            setLoading(true);
             const res = await axios.get(`${API_BASE}/refund-list`, authHeaders);
             if (res.data.status) {
                 setRefunds(res.data.data);
@@ -68,10 +76,8 @@ const RefandManagement = () => {
             if (err.response?.status === 401) {
                 toast.error("Session expired. Please login again.");
             }
-            // Fallback UI
-            setRefunds([
-                { id: 1, invoice: "INV-101", name: "Hasan Talukder", phone: "01700000000", country: "USA", status: "Pending" },
-            ]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -106,6 +112,9 @@ const RefandManagement = () => {
                         salesPerson: "",
                         usersName: "",
                     }));
+                    if (err.response?.status !== 404) {
+                        toast.error("Error fetching invoice data");
+                    }
                 } finally {
                     setIsLoadingData(false);
                 }
@@ -131,7 +140,7 @@ const RefandManagement = () => {
 
             if(res.data.status) {
                 toast.success("Refund applied successfully!");
-                handleCloseModal(); // রিসেট সহ ক্লোজ হবে
+                handleCloseModal();
                 fetchRefundList();
             }
         } catch (err) {
@@ -139,12 +148,55 @@ const RefandManagement = () => {
         }
     };
 
+    // --- Approval Handler ---
+    const handleApproval = async (refundId, action) => {
+        const actionText = action === 'approve' ? 'approve' : 'reject';
+        const confirmMessage = `Are you sure you want to ${actionText} this refund?`;
+        
+        if (!window.confirm(confirmMessage)) return;
+
+        try {
+            const endpoint = action === 'approve' ? `${API_BASE}/refund/approve/${refundId}` : `${API_BASE}/refund/reject/${refundId}`;
+            const res = await axios.put(endpoint, {}, authHeaders);
+            
+            if(res.data.status) {
+                toast.success(`Refund ${actionText}d successfully!`);
+                fetchRefundList(); // Refresh the list
+            } else {
+                toast.error(res.data.message || `Failed to ${actionText} refund`);
+            }
+        } catch (err) {
+            console.error(`${actionText} Error:`, err);
+            toast.error(err.response?.data?.message || `Error ${actionText}ing refund`);
+        }
+    };
+
+    // --- View Details Handler ---
+    const handleViewDetails = (refund) => {
+        // You can implement a details modal here
+        toast.info(`Viewing details for Refund #${refund.invoice}`);
+    };
+
     // --- Pagination Logic ---
     const filteredRefunds = refunds.filter((r) =>
-        r.invoice?.toLowerCase().includes(searchTerm.toLowerCase())
+        r.invoice?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.phone?.includes(searchTerm)
     );
     const paginatedData = filteredRefunds.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
     const totalPages = Math.ceil(filteredRefunds.length / itemsPerPage);
+
+    // Get status badge color
+    const getStatusBadge = (status) => {
+        const statusMap = {
+            'Pending': 'bg-warning',
+            'Approved': 'bg-success',
+            'Rejected': 'bg-danger',
+            'Complete': 'bg-info',
+            'Processing': 'bg-secondary'
+        };
+        return statusMap[status] || 'bg-secondary';
+    };
 
     return (
         <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
@@ -179,7 +231,7 @@ const RefandManagement = () => {
                             <input 
                                 type="text" 
                                 className="form-control bg-light border-start-0" 
-                                placeholder="Search by Invoice..." 
+                                placeholder="Search by Invoice, Name, or Phone..." 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -193,49 +245,107 @@ const RefandManagement = () => {
                                     <th>Customer Name</th>
                                     <th>Phone</th>
                                     <th>Applied Country</th>
+                                    <th>Refund Amount</th>
                                     <th>Status</th>
                                     <th className="text-end px-4">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {paginatedData.length > 0 ? paginatedData.map((item) => (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-5">
+                                            <div className="spinner-border text-primary" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : paginatedData.length > 0 ? paginatedData.map((item) => (
                                     <tr key={item.id}>
                                         <td className="px-4 fw-bold text-primary">{item.invoice}</td>
                                         <td>{item.name}</td>
                                         <td>{item.phone}</td>
                                         <td>{item.country}</td>
-                                        <td><span className={`badge ${item.status === 'Complete' ? 'bg-success' : 'bg-warning'} rounded-pill`}>{item.status}</span></td>
+                                        <td className="fw-bold">${item.refundAmount || '0.00'}</td>
+                                        <td>
+                                            <span className={`badge ${getStatusBadge(item.status)} rounded-pill px-3 py-2`}>
+                                                {item.status || 'Pending'}
+                                            </span>
+                                        </td>
                                         <td className="text-end px-4">
-                                            <button className="btn btn-light btn-sm rounded-circle"><BsEye /></button>
+                                            <div className="d-flex justify-content-end gap-2">
+                                                <button 
+                                                    className="btn btn-info btn-sm rounded-circle" 
+                                                    onClick={() => handleViewDetails(item)}
+                                                    title="View Details"
+                                                >
+                                                    <BsEye />
+                                                </button>
+                                                
+                                                {/* Approval/Reject buttons - Only for authorized roles and if status is Pending */}
+                                                {hasApprovalPermission() && item.status === 'Pending' && (
+                                                    <>
+                                                        <button 
+                                                            className="btn btn-success btn-sm rounded-circle" 
+                                                            onClick={() => handleApproval(item.id, 'approve')}
+                                                            title="Approve Refund"
+                                                        >
+                                                            <BsCheckCircle />
+                                                        </button>
+                                                        <button 
+                                                            className="btn btn-danger btn-sm rounded-circle" 
+                                                            onClick={() => handleApproval(item.id, 'reject')}
+                                                            title="Reject Refund"
+                                                        >
+                                                            <BsXCircle />
+                                                        </button>
+                                                    </>
+                                                )}
+                                                
+                                                {/* Show approval/reject info for non-pending status */}
+                                                {item.status !== 'Pending' && (
+                                                    <span className="text-muted small">
+                                                        {item.status === 'Approved' ? '✓ Approved' : 
+                                                         item.status === 'Rejected' ? '✗ Rejected' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan="6" className="text-center py-4">No records found</td></tr>
+                                    <tr>
+                                        <td colSpan="7" className="text-center py-5 text-muted">
+                                            No refund records found
+                                        </td>
+                                    </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
                     
                     {/* Pagination */}
-                    <div className="card-footer bg-white py-3">
-                        <div className="d-flex justify-content-center align-items-center gap-2">
-                            <button 
-                                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                            >
-                                <BsArrowLeft className="me-1" /> Previous
-                            </button>
-                            <span className="mx-3 fw-bold text-muted">Page {currentPage} of {totalPages || 1}</span>
-                            <button 
-                                className="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                            >
-                                Next <BsArrowRight className="ms-1" />
-                            </button>
+                    {totalPages > 1 && (
+                        <div className="card-footer bg-white py-3">
+                            <div className="d-flex justify-content-center align-items-center gap-2">
+                                <button 
+                                    className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <BsArrowLeft className="me-1" /> Previous
+                                </button>
+                                <span className="mx-3 fw-bold text-muted">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button 
+                                    className="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next <BsArrowRight className="ms-1" />
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
@@ -269,29 +379,29 @@ const RefandManagement = () => {
                                                 )}
                                             </div>
                                             {!formData.customerName && invoiceNo.length > 2 && !isLoadingData && (
-                                                <small className="text-danger">Checking invoice...</small>
+                                                <small className="text-danger mt-1 d-block">Invoice not found. Please check invoice number.</small>
                                             )}
                                         </div>
 
                                         <div className="col-md-6">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Customer Name</label>
-                                            <input type="text" className="form-control bg-light fw-bold" value={formData.customerName} placeholder="Auto fill" readOnly disabled />
+                                            <input type="text" className="form-control bg-light" value={formData.customerName} placeholder="Auto fill" readOnly disabled />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Customer Phone</label>
-                                            <input type="text" className="form-control bg-light fw-bold" value={formData.customerPhone} placeholder="Auto fill" readOnly disabled />
+                                            <input type="text" className="form-control bg-light" value={formData.customerPhone} placeholder="Auto fill" readOnly disabled />
                                         </div>
                                         <div className="col-md-4">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Applied Country</label>
-                                            <input type="text" className="form-control bg-light fw-bold" value={formData.appliedCountry} placeholder="Auto fill" readOnly disabled />
+                                            <input type="text" className="form-control bg-light" value={formData.appliedCountry} placeholder="Auto fill" readOnly disabled />
                                         </div>
                                         <div className="col-md-4">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Sales Person</label>
-                                            <input type="text" className="form-control bg-light fw-bold" value={formData.salesPerson} placeholder="Auto fill" readOnly disabled />
+                                            <input type="text" className="form-control bg-light" value={formData.salesPerson} placeholder="Auto fill" readOnly disabled />
                                         </div>
                                         <div className="col-md-4">
                                             <label className="form-label small text-muted text-uppercase fw-bold">Assigned User</label>
-                                            <input type="text" className="form-control bg-light fw-bold" value={formData.usersName} placeholder="Auto fill" readOnly disabled />
+                                            <input type="text" className="form-control bg-light" value={formData.usersName} placeholder="Auto fill" readOnly disabled />
                                         </div>
                                         <div className="col-12 mt-3">
                                             <label className="form-label fw-semibold">Refund Note / Reason</label>

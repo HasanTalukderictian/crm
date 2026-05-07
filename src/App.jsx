@@ -85,7 +85,7 @@ function App() {
             <Route path="dept" element={<DepartmentManagement />} />
             <Route path="country" element={<CountryManagement />} />
             <Route path="target" element={<TargetManagement />} />
-            <Route path="refand" element={<RefandManagement />} />
+            {/* <Route path="refand" element={<RefandManagement />} /> */}
           </Route>
 
 

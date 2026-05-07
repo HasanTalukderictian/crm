@@ -1,15 +1,16 @@
-import  { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  FaHome, FaUsers, FaSignOutAlt, 
-  FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie 
+import {
+  FaHome, FaUsers, FaSignOutAlt,
+  FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie
 } from 'react-icons/fa';
+import { RiRefund2Fill } from "react-icons/ri";
 
 const Menu = ({ isOpen, darkMode }) => {
   const location = useLocation();
   const navigate = useNavigate();
- 
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   // 🔹 STATE
@@ -25,7 +26,7 @@ const Menu = ({ isOpen, darkMode }) => {
   // 🔹 API CALL
   const fetchHeader = async () => {
     try {
-     const res = await axios.get(`${API_BASE}/get-header`);
+      const res = await axios.get(`${API_BASE}/get-header`);
       if (res.data.status) {
         setCompany(res.data.data[0]);
       }
@@ -79,8 +80,8 @@ const Menu = ({ isOpen, darkMode }) => {
       color: isLogout
         ? '#dc3545'
         : (isActive
-            ? '#0d6efd'
-            : (darkMode ? '#adb5bd' : '#495057')),
+          ? '#0d6efd'
+          : (darkMode ? '#adb5bd' : '#495057')),
       backgroundColor: isActive
         ? (darkMode ? '#2c3034' : '#f8f9fa')
         : 'transparent',
@@ -100,9 +101,9 @@ const Menu = ({ isOpen, darkMode }) => {
       >
         {/* IMAGE */}
         {company?.image ? (
-          <img 
-            src={company.image} 
-            alt="logo" 
+          <img
+            src={company.image}
+            alt="logo"
             style={{
               width: '40px',
               height: '40px',
@@ -172,10 +173,10 @@ const Menu = ({ isOpen, darkMode }) => {
           {isOpen && <span className="ms-3 fw-medium">Target Setting</span>}
         </Link>
 
-        <Link to="/admin/v1/refand" style={navItemStyle('/admin/v1/refand')} className="nav-hover-effect">
-          <FaBullseye size={20} className="min-w-icon" />
-          {isOpen && <span className="ms-3 fw-medium">Refand Management</span>}
-        </Link>
+        {/* <Link to="/admin/v1/refand" style={navItemStyle('/admin/v1/refand')} className="nav-hover-effect">
+          <RiRefund2Fill size={20} className="min-w-icon text-primary" />
+          {isOpen && <span className="ms-3 fw-medium">Refund Management</span>}
+        </Link> */}
 
       </div>
 

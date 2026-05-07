@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import {
@@ -5,6 +7,7 @@ import {
     CategoryScale, LinearScale, BarElement, LineElement, PointElement
 } from "chart.js";
 import { Doughnut, Bar } from "react-chartjs-2";
+import { BsArrowLeft, BsArrowRight, BsChevronDoubleLeft, BsChevronDoubleRight } from "react-icons/bs";
 
 ChartJS.register(
     ArcElement, Tooltip, Legend, CategoryScale,
@@ -15,7 +18,6 @@ export const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const HomePage = () => {
     const navigate = useNavigate();
-    // লেআউট থেকে darkMode স্টেট পাওয়ার জন্য context ব্যবহার করা হয়েছে
     const [darkMode] = useOutletContext(); 
 
     // Data States
@@ -26,8 +28,10 @@ const HomePage = () => {
     const [visaStatus, setVisaStatus] = useState({ pending: 0, processing: 0, complete: 0, cancle: 0 });
     const [remainders, setRemainders] = useState([]);
     const [topSales, setTopSales] = useState([]);
+    
+    // Pagination States
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const itemsPerPage = 8; // প্রতি পেজে ৮টি রেকর্ড দেখাবে
 
     useEffect(() => {
         const token = localStorage.getItem("authToken");
@@ -97,6 +101,35 @@ const HomePage = () => {
     const getColor = (days) => days <= 3 ? "#ff4d4d" : days <= 7 ? "#ffa502" : "#2ed573";
     const getMedal = (index) => ["🥇", "🥈", "🥉", "🏅", "🏅"][index] || "🏅";
 
+    // Pagination Logic
+    const totalPages = Math.ceil(remainders.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentRemainders = remainders.slice(startIndex, endIndex);
+
+    // Pagination Handlers
+    const goToFirstPage = () => setCurrentPage(1);
+    const goToLastPage = () => setCurrentPage(totalPages);
+    const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+    // Generate Page Numbers
+    const getPageNumbers = () => {
+        const pageNumbers = [];
+        const maxVisible = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        
+        if (endPage - startPage + 1 < maxVisible) {
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            pageNumbers.push(i);
+        }
+        return pageNumbers;
+    };
+
     const pieSummaryData = {
         labels: ["Target", "Achieved", "Remaining"],
         datasets: [{
@@ -110,8 +143,6 @@ const HomePage = () => {
         labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         datasets: [{ label: "Collection", data: monthlyProperties, backgroundColor: "#4e73df", borderRadius: 5 }]
     };
-
-    const currentItems = remainders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
         <div style={{ color: darkMode ? '#ffffff' : '#212529' }}>
@@ -142,7 +173,9 @@ const HomePage = () => {
                 <div className="col-md-4">
                     <div className="card glass-card p-4 border-0 shadow-sm rounded-4 h-100">
                         <h6 className="fw-bold mb-3">Visa Status Overview</h6>
+
                         <div className="d-flex flex-column gap-1 small">
+                             <div className="d-flex justify-content-between"><span>Pending:</span> <b className="text-primary">{visaStatus.pending}</b></div>
                             <div className="d-flex justify-content-between"><span>Processing:</span> <b className="text-primary">{visaStatus.processing}</b></div>
                             <div className="d-flex justify-content-between"><span>Completed:</span> <b className="text-success">{visaStatus.complete}</b></div>
                             <div className="d-flex justify-content-between"><span>Cancelled:</span> <b className="text-danger">{visaStatus.cancle}</b></div>
@@ -197,27 +230,160 @@ const HomePage = () => {
                 </div>
             </div>
 
-            {/* Table Section */}
+            {/* Customer Remainder List with Pagination */}
             <div className="card glass-card border-0 shadow-sm rounded-4 mt-4 p-4 mb-4">
-                <h6 className="fw-bold mb-3">Customer Remainder List</h6>
+                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+                    <h6 className="fw-bold mb-0">Customer Remainder List</h6>
+                    <div className="text-muted small">
+                        Showing {startIndex + 1} - {Math.min(endIndex, remainders.length)} of {remainders.length} entries
+                    </div>
+                </div>
+                
                 <div className="table-responsive">
                     <table className={`table table-hover small ${darkMode ? 'table-dark' : ''}`}>
                         <thead>
-                            <tr><th>Customer</th><th>Phone</th><th>Remaining</th><th>Invoice</th><th>Passport</th></tr>
+                            <tr className={darkMode ? 'border-secondary' : ''}>
+                                <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Remaining</th>
+                                <th>Invoice</th>
+                                <th>Passport</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            {currentItems.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td className={darkMode ? 'text-light' : ''}>{item.name}</td>
-                                    <td className={darkMode ? 'text-light' : ''}>{item.phone}</td>
-                                    <td><span className="badge px-2 py-1" style={{ backgroundColor: getColor(item.remainder_days) + '22', color: getColor(item.remainder_days) }}>{item.remainder_days} Days</span></td>
-                                    <td className={darkMode ? 'text-light' : ''}>#{item.invoice}</td>
-                                    <td className={darkMode ? 'text-light' : ''}>#{item.passport}</td>
+                            {currentRemainders.length > 0 ? (
+                                currentRemainders.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td className={darkMode ? 'text-light' : ''}>{item.name}</td>
+                                        <td className={darkMode ? 'text-light' : ''}>{item.phone}</td>
+                                        <td>
+                                            <span className="badge px-2 py-1" style={{ 
+                                                backgroundColor: getColor(item.remainder_days) + '22', 
+                                                color: getColor(item.remainder_days) 
+                                            }}>
+                                                {item.remainder_days} Days
+                                            </span>
+                                        </td>
+                                        <td className={darkMode ? 'text-light' : ''}>#{item.invoice}</td>
+                                        <td className={darkMode ? 'text-light' : ''}>#{item.passport}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="text-center py-4 text-muted">
+                                        No records found
+                                    </td>
                                 </tr>
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Component */}
+                {remainders.length > 0 && (
+                    <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+                        <div className="text-muted small">
+                            Page {currentPage} of {totalPages}
+                        </div>
+                        
+                        <div className="d-flex gap-2 align-items-center">
+                            {/* First Page Button */}
+                            <button
+                                onClick={goToFirstPage}
+                                disabled={currentPage === 1}
+                                className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                style={{ width: '32px', height: '32px' }}
+                                title="First Page"
+                            >
+                                <BsChevronDoubleLeft size={14} />
+                            </button>
+                            
+                            {/* Previous Button */}
+                            <button
+                                onClick={goToPreviousPage}
+                                disabled={currentPage === 1}
+                                className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
+                            >
+                                <BsArrowLeft size={14} /> Previous
+                            </button>
+                            
+                            {/* Page Numbers */}
+                            <div className="d-flex gap-1 mx-2">
+                                {getPageNumbers().map(pageNum => (
+                                    <button
+                                        key={pageNum}
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className={`btn btn-sm rounded-circle d-flex align-items-center justify-content-center ${
+                                            currentPage === pageNum 
+                                                ? 'btn-primary text-white' 
+                                                : 'btn-outline-primary'
+                                        }`}
+                                        style={{ width: '35px', height: '35px', minWidth: '35px' }}
+                                    >
+                                        {pageNum}
+                                    </button>
+                                ))}
+                                
+                                {/* Show ellipsis if needed */}
+                                {totalPages > 5 && currentPage + 2 < totalPages && (
+                                    <span className="d-flex align-items-center px-1">...</span>
+                                )}
+                                
+                                {/* Last page button if not in range */}
+                                {totalPages > 5 && currentPage + 2 < totalPages && (
+                                    <button
+                                        onClick={() => setCurrentPage(totalPages)}
+                                        className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                        style={{ width: '35px', height: '35px', minWidth: '35px' }}
+                                    >
+                                        {totalPages}
+                                    </button>
+                                )}
+                            </div>
+                            
+                            {/* Next Button */}
+                            <button
+                                onClick={goToNextPage}
+                                disabled={currentPage === totalPages}
+                                className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
+                            >
+                                Next <BsArrowRight size={14} />
+                            </button>
+                            
+                            {/* Last Page Button */}
+                            <button
+                                onClick={goToLastPage}
+                                disabled={currentPage === totalPages}
+                                className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
+                                style={{ width: '32px', height: '32px' }}
+                                title="Last Page"
+                            >
+                                <BsChevronDoubleRight size={14} />
+                            </button>
+                        </div>
+                        
+                        {/* Per Page Selector (Optional) */}
+                        <div className="d-flex align-items-center gap-2">
+                            <span className="text-muted small">Show</span>
+                            <select 
+                                className="form-select form-select-sm w-auto"
+                                value={itemsPerPage}
+                                onChange={(e) => {
+                                    setCurrentPage(1);
+                                    // You can make itemsPerPage state variable if needed
+                                }}
+                                style={{ width: '70px' }}
+                            >
+                                <option value={8}>8</option>
+                                <option value={10}>10</option>
+                                <option value={15}>15</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <span className="text-muted small">entries</span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <style jsx>{`
@@ -225,6 +391,9 @@ const HomePage = () => {
                 .bg-primary-soft { background: #4e73df22; }
                 .transition-hover:hover { transform: translateY(-5px); border-color: #4e73df !important; transition: 0.3s; }
                 .table-dark { --bs-table-bg: #1e1e1e; color: #fff; }
+                .table-dark td, .table-dark th { border-color: #2d2d2d; }
+                .btn-outline-primary:hover { background: #4e73df; border-color: #4e73df; }
+                .btn-outline-primary:disabled { opacity: 0.5; cursor: not-allowed; }
             `}</style>
         </div>
     );
