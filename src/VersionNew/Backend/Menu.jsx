@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  FaHome, FaUsers, FaSignOutAlt,
+  FaHome, FaUsers, 
   FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie
 } from 'react-icons/fa';
-import { RiRefund2Fill } from "react-icons/ri";
 
 const Menu = ({ isOpen, darkMode }) => {
   const location = useLocation();
@@ -35,23 +34,15 @@ const Menu = ({ isOpen, darkMode }) => {
     }
   };
 
-  // 🔹 ROLE FIX (based on your login system)
+  // 🔹 ROLE FIX
   const getUserRole = () => {
     const roleData = localStorage.getItem("userRole");
 
     if (roleData) {
-      setRole(roleData.toLowerCase()); // safe check
+      setRole(roleData.toLowerCase());
     } else {
       setRole("admin");
     }
-  };
-
-  // 🔹 LOGOUT
-  const handleLogout = (e) => {
-    e.preventDefault();
-    localStorage.clear();
-    navigate("/admin");
-    window.location.reload();
   };
 
   const sidebarStyle = {
@@ -68,7 +59,7 @@ const Menu = ({ isOpen, darkMode }) => {
     flexDirection: 'column'
   };
 
-  const navItemStyle = (path, isLogout = false) => {
+  const navItemStyle = (path) => {
     const isActive = location.pathname === path;
 
     return {
@@ -77,11 +68,9 @@ const Menu = ({ isOpen, darkMode }) => {
       padding: '12px 25px',
       textDecoration: 'none',
       transition: '0.2s',
-      color: isLogout
-        ? '#dc3545'
-        : (isActive
+      color: isActive
           ? '#0d6efd'
-          : (darkMode ? '#adb5bd' : '#495057')),
+          : (darkMode ? '#adb5bd' : '#495057'),
       backgroundColor: isActive
         ? (darkMode ? '#2c3034' : '#f8f9fa')
         : 'transparent',
@@ -173,24 +162,6 @@ const Menu = ({ isOpen, darkMode }) => {
           {isOpen && <span className="ms-3 fw-medium">Target Setting</span>}
         </Link>
 
-        {/* <Link to="/admin/v1/refand" style={navItemStyle('/admin/v1/refand')} className="nav-hover-effect">
-          <RiRefund2Fill size={20} className="min-w-icon text-primary" />
-          {isOpen && <span className="ms-3 fw-medium">Refund Management</span>}
-        </Link> */}
-
-      </div>
-
-      {/* 🔹 LOGOUT (BOTTOM FIXED) */}
-      <div className="border-top py-3 mt-auto">
-        <Link
-          to="#"
-          style={navItemStyle('', true)}
-          className="nav-hover-effect"
-          onClick={handleLogout}
-        >
-          <FaSignOutAlt size={20} className="min-w-icon" />
-          {isOpen && <span className="ms-3 fw-medium">Logout</span>}
-        </Link>
       </div>
 
       {/* 🔹 STYLE */}

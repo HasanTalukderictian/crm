@@ -33,6 +33,29 @@ const HomePage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8; // প্রতি পেজে ৮টি রেকর্ড দেখাবে
 
+
+// ১. মাস অনুযায়ী ফিল্টার করার জন্য নতুন স্টেট (উপরে ডিফাইন করুন)
+const [selectedMonth, setSelectedMonth] = useState(""); 
+
+// ২. অরিজিনাল remainders থেকে ফিল্টার করা ডাটা বের করা
+const monthlyFilteredList = remainders.filter(item => {
+    if (!selectedMonth) return true;
+    // আপনার item এ যদি date ফিল্ড থাকে (উদা: "2024-05-10")
+    const month = new Date(item.date).getMonth() + 1; 
+    return month === parseInt(selectedMonth);
+});
+
+// ৩. নতুন নামে ক্যালকুলেশন (যাতে আগের লজিক ডিস্টার্ব না হয়)
+const filteredTotalPages = Math.ceil(monthlyFilteredList.length / itemsPerPage);
+const filteredStartIndex = (currentPage - 1) * itemsPerPage;
+const filteredEndIndex = filteredStartIndex + itemsPerPage;
+
+// ৪. টেবিলের জন্য বর্তমান ডাটা
+const displayRemainders = monthlyFilteredList.slice(filteredStartIndex, filteredEndIndex);
+
+
+
+
     useEffect(() => {
         const token = localStorage.getItem("authToken");
         if (!token) {
@@ -231,160 +254,139 @@ const HomePage = () => {
             </div>
 
             {/* Customer Remainder List with Pagination */}
-            <div className="card glass-card border-0 shadow-sm rounded-4 mt-4 p-4 mb-4">
-                <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
-                    <h6 className="fw-bold mb-0">Customer Remainder List</h6>
-                    <div className="text-muted small">
-                        Showing {startIndex + 1} - {Math.min(endIndex, remainders.length)} of {remainders.length} entries
-                    </div>
+
+            {/* Customer Remainder List with Pagination */}
+<div className="card glass-card border-0 shadow-sm rounded-4 mt-4 p-4 mb-4">
+    <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
+        <div className="d-flex align-items-center gap-3">
+            <h6 className="fw-bold mb-0">Customer Remainder List</h6>
+            
+            {/* মাসের ড্রপডাউন ফিল্টার */}
+            <select 
+                className={`form-select form-select-sm w-auto ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+                value={selectedMonth}
+                onChange={(e) => {
+                    setSelectedMonth(e.target.value);
+                    setCurrentPage(1); 
+                }}
+            >
+                <option value="">All Months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+            </select>
+        </div>
+
+        <div className="text-muted small">
+            Showing {monthlyFilteredList.length > 0 ? filteredStartIndex + 1 : 0} - {Math.min(filteredEndIndex, monthlyFilteredList.length)} of {monthlyFilteredList.length} entries
+        </div>
+    </div>
+    
+    <div className="table-responsive">
+        <table className={`table table-hover small ${darkMode ? 'table-dark' : ''}`}>
+            <thead>
+                <tr className={darkMode ? 'border-secondary' : ''}>
+                    <th>Customer</th>
+                    <th>Phone</th>
+                    <th>Remaining</th>
+                    <th>Invoice</th>
+                    <th>Passport</th>
+                </tr>
+            </thead>
+            <tbody>
+                {displayRemainders.length > 0 ? (
+                    displayRemainders.map((item, idx) => (
+                        <tr key={idx}>
+                            <td className={darkMode ? 'text-light' : ''}>{item.name}</td>
+                            <td className={darkMode ? 'text-light' : ''}>{item.phone}</td>
+                            <td>
+                                <span className="badge px-2 py-1" style={{ 
+                                    backgroundColor: getColor(item.remainder_days) + '22', 
+                                    color: getColor(item.remainder_days) 
+                                }}>
+                                    {item.remainder_days} Days
+                                </span>
+                            </td>
+                            <td className={darkMode ? 'text-light' : ''}>#{item.invoice}</td>
+                            <td className={darkMode ? 'text-light' : ''}>#{item.passport}</td>
+                        </tr>
+                    ))
+                ) : (
+                    <tr>
+                        <td colSpan="5" className="text-center py-4 text-muted">No records found</td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+
+    {/* Pagination Component */}
+    {monthlyFilteredList.length > 0 && (
+        <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+            <div className="text-muted small">
+                Page {currentPage} of {filteredTotalPages}
+            </div>
+            
+            <div className="d-flex gap-2 align-items-center">
+                <button 
+                    onClick={goToFirstPage} 
+                    disabled={currentPage === 1} 
+                    className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" 
+                    style={{ width: '32px', height: '32px' }}
+                >
+                    <BsChevronDoubleLeft size={14} />
+                </button>
+                
+                <button 
+                    onClick={goToPreviousPage} 
+                    disabled={currentPage === 1} 
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
+                >
+                    <BsArrowLeft size={14} /> Previous
+                </button>
+                
+                <div className="d-flex gap-1 mx-2">
+                    {getPageNumbers(filteredTotalPages).map(pageNum => (
+                        <button
+                            key={pageNum}
+                            onClick={() => setCurrentPage(pageNum)}
+                            className={`btn btn-sm rounded-circle d-flex align-items-center justify-content-center ${currentPage === pageNum ? 'btn-primary text-white' : 'btn-outline-primary'}`}
+                            style={{ width: '35px', height: '35px' }}
+                        >
+                            {pageNum}
+                        </button>
+                    ))}
                 </div>
                 
-                <div className="table-responsive">
-                    <table className={`table table-hover small ${darkMode ? 'table-dark' : ''}`}>
-                        <thead>
-                            <tr className={darkMode ? 'border-secondary' : ''}>
-                                <th>Customer</th>
-                                <th>Phone</th>
-                                <th>Remaining</th>
-                                <th>Invoice</th>
-                                <th>Passport</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentRemainders.length > 0 ? (
-                                currentRemainders.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td className={darkMode ? 'text-light' : ''}>{item.name}</td>
-                                        <td className={darkMode ? 'text-light' : ''}>{item.phone}</td>
-                                        <td>
-                                            <span className="badge px-2 py-1" style={{ 
-                                                backgroundColor: getColor(item.remainder_days) + '22', 
-                                                color: getColor(item.remainder_days) 
-                                            }}>
-                                                {item.remainder_days} Days
-                                            </span>
-                                        </td>
-                                        <td className={darkMode ? 'text-light' : ''}>#{item.invoice}</td>
-                                        <td className={darkMode ? 'text-light' : ''}>#{item.passport}</td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="text-center py-4 text-muted">
-                                        No records found
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination Component */}
-                {remainders.length > 0 && (
-                    <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
-                        <div className="text-muted small">
-                            Page {currentPage} of {totalPages}
-                        </div>
-                        
-                        <div className="d-flex gap-2 align-items-center">
-                            {/* First Page Button */}
-                            <button
-                                onClick={goToFirstPage}
-                                disabled={currentPage === 1}
-                                className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
-                                style={{ width: '32px', height: '32px' }}
-                                title="First Page"
-                            >
-                                <BsChevronDoubleLeft size={14} />
-                            </button>
-                            
-                            {/* Previous Button */}
-                            <button
-                                onClick={goToPreviousPage}
-                                disabled={currentPage === 1}
-                                className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
-                            >
-                                <BsArrowLeft size={14} /> Previous
-                            </button>
-                            
-                            {/* Page Numbers */}
-                            <div className="d-flex gap-1 mx-2">
-                                {getPageNumbers().map(pageNum => (
-                                    <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`btn btn-sm rounded-circle d-flex align-items-center justify-content-center ${
-                                            currentPage === pageNum 
-                                                ? 'btn-primary text-white' 
-                                                : 'btn-outline-primary'
-                                        }`}
-                                        style={{ width: '35px', height: '35px', minWidth: '35px' }}
-                                    >
-                                        {pageNum}
-                                    </button>
-                                ))}
-                                
-                                {/* Show ellipsis if needed */}
-                                {totalPages > 5 && currentPage + 2 < totalPages && (
-                                    <span className="d-flex align-items-center px-1">...</span>
-                                )}
-                                
-                                {/* Last page button if not in range */}
-                                {totalPages > 5 && currentPage + 2 < totalPages && (
-                                    <button
-                                        onClick={() => setCurrentPage(totalPages)}
-                                        className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
-                                        style={{ width: '35px', height: '35px', minWidth: '35px' }}
-                                    >
-                                        {totalPages}
-                                    </button>
-                                )}
-                            </div>
-                            
-                            {/* Next Button */}
-                            <button
-                                onClick={goToNextPage}
-                                disabled={currentPage === totalPages}
-                                className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
-                            >
-                                Next <BsArrowRight size={14} />
-                            </button>
-                            
-                            {/* Last Page Button */}
-                            <button
-                                onClick={goToLastPage}
-                                disabled={currentPage === totalPages}
-                                className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center"
-                                style={{ width: '32px', height: '32px' }}
-                                title="Last Page"
-                            >
-                                <BsChevronDoubleRight size={14} />
-                            </button>
-                        </div>
-                        
-                        {/* Per Page Selector (Optional) */}
-                        <div className="d-flex align-items-center gap-2">
-                            <span className="text-muted small">Show</span>
-                            <select 
-                                className="form-select form-select-sm w-auto"
-                                value={itemsPerPage}
-                                onChange={(e) => {
-                                    setCurrentPage(1);
-                                    // You can make itemsPerPage state variable if needed
-                                }}
-                                style={{ width: '70px' }}
-                            >
-                                <option value={8}>8</option>
-                                <option value={10}>10</option>
-                                <option value={15}>15</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                            </select>
-                            <span className="text-muted small">entries</span>
-                        </div>
-                    </div>
-                )}
+                <button 
+                    onClick={goToNextPage} 
+                    disabled={currentPage === filteredTotalPages} 
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 px-3 rounded-pill"
+                >
+                    Next <BsArrowRight size={14} />
+                </button>
+                
+                <button 
+                    onClick={goToLastPage} 
+                    disabled={currentPage === filteredTotalPages} 
+                    className="btn btn-sm btn-outline-primary rounded-circle d-flex align-items-center justify-content-center" 
+                    style={{ width: '32px', height: '32px' }}
+                >
+                    <BsChevronDoubleRight size={14} />
+                </button>
             </div>
+        </div>
+    )}
+</div>
 
             <style jsx>{`
                 .glass-card { background: ${darkMode ? '#1e1e1e' : '#ffffff'}; color: ${darkMode ? '#ffffff' : '#212529'} !important; }

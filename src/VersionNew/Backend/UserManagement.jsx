@@ -9,7 +9,8 @@ const UserManagement = () => {
     const [filteredUsers, setFilteredUsers] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [filterStatus, setFilterStatus] = useState("all");
-
+    const [loading, setLoading] = useState(false); // Loading state
+    const [actionLoading, setActionLoading] = useState(false); // For actions like toggle/reset
     const [currentPage, setCurrentPage] = useState(1);
     const usersPerPage = 5;
 
@@ -26,6 +27,7 @@ const UserManagement = () => {
     const [confirmPassword, setConfirmPassword] = useState("");
 
     const fetchUsers = async () => {
+        setLoading(true);
         try {
             const token = localStorage.getItem("authToken");
             const response = await fetch(`${API_BASE}/users`, {
@@ -41,6 +43,9 @@ const UserManagement = () => {
             }
         } catch (error) {
             console.error("Fetch error:", error);
+            toast.error("Failed to load users");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -66,6 +71,7 @@ const UserManagement = () => {
             toast.error("Passwords do not match");
             return;
         }
+        setActionLoading(true);
         try {
             const token = localStorage.getItem("authToken");
             const response = await fetch(`${API_BASE}/users/${selectedUserId}/reset-password`, {
@@ -89,10 +95,13 @@ const UserManagement = () => {
         } catch (err) {
             console.error(err);
             toast.error("Something went wrong");
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const toggleStatus = async (userId, currentStatus) => {
+        setActionLoading(true);
         try {
             const token = localStorage.getItem("authToken");
             const response = await fetch(`${API_BASE}/users/${userId}/toggle-status`, {
@@ -115,11 +124,14 @@ const UserManagement = () => {
         } catch (error) {
             console.error(error);
             toast.error("Failed to update status");
+        } finally {
+            setActionLoading(false);
         }
     };
 
     const handleAddUser = async (e) => {
         e.preventDefault();
+        setActionLoading(true);
         const token = localStorage.getItem("authToken");
         try {
             const response = await fetch(`${API_BASE}/create-user`, {
@@ -149,6 +161,8 @@ const UserManagement = () => {
         } catch (err) {
             setError("Something went wrong");
             toast.error("Something went wrong");
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -169,8 +183,75 @@ const UserManagement = () => {
     const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
     const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
+    // Loader Component
+    const Loader = () => (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            backdropFilter: 'blur(4px)'
+        }}>
+            <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '30px 40px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '20px',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                animation: 'fadeIn 0.3s ease-out'
+            }}>
+                <div className="spinner-border text-primary" style={{ width: '50px', height: '50px' }} role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <div style={{ fontSize: '16px', color: '#2c3e50', fontWeight: '500' }}>
+                    <i className="bi bi-hourglass-split me-2"></i>
+                    Please wait...
+                </div>
+            </div>
+            <style>{`
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+            `}</style>
+        </div>
+    );
+
+    // Table Loader Component
+    const TableLoader = () => (
+        <div style={{
+            padding: '60px 20px',
+            textAlign: 'center',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px'
+        }}>
+            <div className="spinner-border text-primary" style={{ width: '40px', height: '40px' }} role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3 text-muted mb-0">Loading users...</p>
+        </div>
+    );
+
     return (
         <>
+            {/* Global Loader for initial data fetch */}
+            {loading && <Loader />}
+
             <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh' }}>
                 <div className="container-fluid px-4 py-4">
                     {/* Header Card */}
@@ -190,6 +271,7 @@ const UserManagement = () => {
                                             className="btn btn-primary rounded-3 px-4 py-2"
                                             onClick={() => setShowModal(true)}
                                             style={{ fontWeight: '500' }}
+                                            disabled={actionLoading}
                                         >
                                             <i className="bi bi-person-plus-fill me-2"></i>
                                             Add New User
@@ -215,12 +297,14 @@ const UserManagement = () => {
                                                 className={`btn ${filterStatus === "all" ? "btn-primary" : "btn-outline-secondary"}`}
                                                 onClick={() => applyFilter("all")}
                                                 style={{ borderRadius: '8px 0 0 8px' }}
+                                                disabled={loading || actionLoading}
                                             >
                                                 <i className="bi bi-list-ul me-1"></i> All
                                             </button>
                                             <button
                                                 className={`btn ${filterStatus === "active" ? "btn-primary" : "btn-outline-secondary"}`}
                                                 onClick={() => applyFilter("active")}
+                                                disabled={loading || actionLoading}
                                             >
                                                 <i className="bi bi-check-circle-fill me-1"></i> Active
                                             </button>
@@ -228,6 +312,7 @@ const UserManagement = () => {
                                                 className={`btn ${filterStatus === "inactive" ? "btn-primary" : "btn-outline-secondary"}`}
                                                 onClick={() => applyFilter("inactive")}
                                                 style={{ borderRadius: '0 8px 8px 0' }}
+                                                disabled={loading || actionLoading}
                                             >
                                                 <i className="bi bi-x-circle-fill me-1"></i> Inactive
                                             </button>
@@ -260,7 +345,7 @@ const UserManagement = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {currentUsers.length > 0 ? (
+                                                {!loading && currentUsers.length > 0 ? (
                                                     currentUsers.map((user, index) => (
                                                         <tr key={user.id} style={{ backgroundColor: index % 2 === 0 ? 'white' : '#f8f9fa' }}>
                                                             <td className="py-3 px-4">
@@ -284,9 +369,9 @@ const UserManagement = () => {
                                                                 </div>
                                                             </td>
                                                             <td className="py-3">
-                                                                <span className={`badge ${user.role === "admin" ? "bg-danger" : "bg-primary"} px-3 py-2 rounded-pill`}>
+                                                                <span className={`badge ${user.role === "admin" ? "bg-danger" : user.role === "manager" ? "bg-warning" : user.role === "finance_manager" ? "bg-info" : "bg-primary"} px-3 py-2 rounded-pill`}>
                                                                     <i className={`bi ${user.role === "admin" ? "bi-shield-shaded" : "bi-person"} me-1`}></i>
-                                                                    {user.role === "admin" ? "Administrator" : "Regular User"}
+                                                                    {user.role === "admin" ? "Administrator" : user.role === "manager" ? "Sales Manager" : user.role === "finance_manager" ? "Finance Manager" : "Regular User"}
                                                                 </span>
                                                              </td>
                                                             <td className="py-3">{user.email}</td>
@@ -295,8 +380,13 @@ const UserManagement = () => {
                                                                     className={`btn btn-sm ${user.active ? 'btn-success' : 'btn-secondary'} rounded-pill px-3`}
                                                                     style={{ minWidth: "90px", fontWeight: '500' }}
                                                                     onClick={() => toggleStatus(user.id, user.active)}
+                                                                    disabled={actionLoading}
                                                                 >
-                                                                    <i className={`bi ${user.active ? 'bi-check-circle' : 'bi-x-circle'} me-1`}></i>
+                                                                    {actionLoading ? (
+                                                                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                                    ) : (
+                                                                        <i className={`bi ${user.active ? 'bi-check-circle' : 'bi-x-circle'} me-1`}></i>
+                                                                    )}
                                                                     {user.active ? 'Active' : 'Inactive'}
                                                                 </button>
                                                              </td>
@@ -304,15 +394,20 @@ const UserManagement = () => {
                                                                 <button
                                                                     className="btn btn-outline-primary btn-sm rounded-pill px-3"
                                                                     onClick={() => openResetModal(user.id)}
+                                                                    disabled={actionLoading}
                                                                     style={{ fontWeight: '500' }}
                                                                 >
-                                                                    <i className="bi bi-key-fill me-1"></i>
+                                                                    {actionLoading && selectedUserId === user.id ? (
+                                                                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                                    ) : (
+                                                                        <i className="bi bi-key-fill me-1"></i>
+                                                                    )}
                                                                     Reset Password
                                                                 </button>
                                                              </td>
                                                         </tr>
                                                     ))
-                                                ) : (
+                                                ) : !loading && currentUsers.length === 0 ? (
                                                     <tr>
                                                         <td colSpan="5" className="text-center py-5">
                                                             <i className="bi bi-inbox display-1 text-muted"></i>
@@ -326,6 +421,12 @@ const UserManagement = () => {
                                                             </button>
                                                          </td>
                                                     </tr>
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan="5" className="p-0">
+                                                            <TableLoader />
+                                                        </td>
+                                                    </tr>
                                                 )}
                                             </tbody>
                                         </table>
@@ -336,7 +437,7 @@ const UserManagement = () => {
                     </div>
 
                     {/* Pagination */}
-                    {totalPages > 1 && (
+                    {totalPages > 1 && !loading && (
                         <div className="row mt-4">
                             <div className="col-12">
                                 <div className="d-flex justify-content-center">
@@ -346,6 +447,7 @@ const UserManagement = () => {
                                                 <button 
                                                     className="page-link rounded-start" 
                                                     onClick={() => setCurrentPage(currentPage - 1)}
+                                                    disabled={actionLoading}
                                                 >
                                                     <i className="bi bi-chevron-left"></i> Previous
                                                 </button>
@@ -396,6 +498,7 @@ const UserManagement = () => {
                                                 <button 
                                                     className="page-link rounded-end" 
                                                     onClick={() => setCurrentPage(currentPage + 1)}
+                                                    disabled={actionLoading}
                                                 >
                                                     Next <i className="bi bi-chevron-right"></i>
                                                 </button>
@@ -445,6 +548,7 @@ const UserManagement = () => {
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             required
+                                            disabled={actionLoading}
                                         />
                                     </div>
                                     <div className="mb-3">
@@ -458,6 +562,7 @@ const UserManagement = () => {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
+                                            disabled={actionLoading}
                                         />
                                     </div>
                                     <div className="mb-3">
@@ -471,6 +576,7 @@ const UserManagement = () => {
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
                                             required
+                                            disabled={actionLoading}
                                         />
                                     </div>
                                     <div className="mb-4">
@@ -481,11 +587,12 @@ const UserManagement = () => {
                                             className="form-select rounded-3"
                                             value={role}
                                             onChange={(e) => setRole(e.target.value)}
+                                            disabled={actionLoading}
                                         >
                                             <option value="admin">👑 Administrator (Full Access)</option>
                                             <option value="user">👤 Regular User (Limited Access)</option>
                                             <option value="manager">👤 Sales Manager (Limited Access)</option>
-                                             <option value="finance_manager">👤 Finance Manager (Limited Access)</option>
+                                            <option value="finance_manager">👤 Finance Manager (Limited Access)</option>
                                         </select>
                                     </div>
                                     <div className="d-flex justify-content-end gap-2">
@@ -493,12 +600,22 @@ const UserManagement = () => {
                                             type="button" 
                                             className="btn btn-secondary rounded-pill px-4" 
                                             onClick={() => setShowModal(false)}
+                                            disabled={actionLoading}
                                         >
                                             Cancel
                                         </button>
-                                        <button type="submit" className="btn btn-primary rounded-pill px-4">
-                                            <i className="bi bi-save me-2"></i>
-                                            Create User
+                                        <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={actionLoading}>
+                                            {actionLoading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Creating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-save me-2"></i>
+                                                    Create User
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </form>
@@ -533,6 +650,7 @@ const UserManagement = () => {
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             required
+                                            disabled={actionLoading}
                                         />
                                     </div>
                                     <div className="mb-4">
@@ -546,6 +664,7 @@ const UserManagement = () => {
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             required
+                                            disabled={actionLoading}
                                         />
                                     </div>
                                     <div className="d-flex justify-content-end gap-2">
@@ -553,12 +672,22 @@ const UserManagement = () => {
                                             type="button" 
                                             className="btn btn-secondary rounded-pill px-4" 
                                             onClick={closeResetModal}
+                                            disabled={actionLoading}
                                         >
                                             Cancel
                                         </button>
-                                        <button type="submit" className="btn btn-danger rounded-pill px-4">
-                                            <i className="bi bi-key me-2"></i>
-                                            Reset Password
+                                        <button type="submit" className="btn btn-danger rounded-pill px-4" disabled={actionLoading}>
+                                            {actionLoading ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Resetting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="bi bi-key me-2"></i>
+                                                    Reset Password
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </form>

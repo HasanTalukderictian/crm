@@ -756,6 +756,34 @@ const VisaManagement = () => {
                                         <label className="form-label fw-bold">Customer Phone <span className="text-danger">*</span></label>
                                         <input type="tel" className="form-control" placeholder="11 digit phone number" value={phone} onChange={(e) => { if (e.target.value.length <= 11) setPhone(e.target.value) }} />
                                     </div>
+
+                                    {/* <div className="col-md-6 mb-3">
+                                        <label className="form-label fw-bold">
+                                            Customer Phone <span className="text-danger">*</span>
+                                        </label>
+
+                                        <input
+                                            type="tel"
+                                            className="form-control"
+                                            placeholder="01XXXXXXXXX"
+                                            value={phone}
+                                            onChange={(e) => {
+                                                let value = e.target.value.replace(/\D/g, '');
+
+                                                // প্রথম digit সবসময় 0 হবে
+                                                if (value.length === 1 && value !== '0') {
+                                                    value = '0' + value;
+                                                }
+
+                                                // সর্বোচ্চ 11 digit
+                                                if (value.length <= 11) {
+                                                    setPhone(value);
+                                                }
+                                            }}
+                                        />
+                                    </div> */}
+
+
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Passport Number <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" placeholder="6-10 characters" value={passport} onChange={(e) => { if (e.target.value.length <= 10) setPassport(e.target.value) }} />
