@@ -22,7 +22,7 @@ const TargetManagement = () => {
     const [filterUser, setFilterUser] = useState("");
     const [selectedUserId, setSelectedUserId] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const usersPerPage = 5;
+    const usersPerPage = 5           ;
 
     const userRole = localStorage.getItem("userRole");
     const userId = Number(localStorage.getItem("userId"));

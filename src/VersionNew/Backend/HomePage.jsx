@@ -218,7 +218,7 @@ const displayRemainders = monthlyFilteredList.slice(filteredStartIndex, filtered
                             <div className={`text-center p-3 rounded-4 border transition-hover h-100 ${darkMode ? 'border-secondary' : ''}`}>
                                 <div className="fs-3 mb-1">{getMedal(index)}</div>
                                 <div className="small fw-bold text-truncate">{item.team?.name || "N/A"}</div>
-                                <div className="text-primary fw-bold mt-1 fs-5">{item.total_visas} <span className="small fw-normal">Visas</span></div>
+                                <div className="text-primary fw-bold mt-1 fs-5">{item.total_member} <span className="small fw-normal">Visas</span></div>
                             </div>
                         </div>
                     ))}

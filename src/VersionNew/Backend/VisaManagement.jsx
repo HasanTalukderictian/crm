@@ -590,6 +590,7 @@ const VisaManagement = () => {
                                                         <th className="py-3">Member</th>
                                                         <th className="py-3">Country</th>
                                                         <th className="py-3">Sales Person</th>
+                                                         <th className="py-3">Process Person</th>
                                                         <th className="py-3">Date</th>
                                                         <th className="py-3">Photo</th>
                                                         <th className="py-3">Status</th>
@@ -605,6 +606,7 @@ const VisaManagement = () => {
                                                                 <td className="align-middle">{review.passport}</td>
                                                                 <td className="align-middle">{review.invoice}</td>
                                                                 <td className="align-middle">{review.member}</td>
+                                                                     <td className="align-middle">{review.user?.name}</td>
                                                                 <td className="align-middle">{getCountries(review)}</td>
                                                                 <td className="align-middle">{review.team?.name}</td>
                                                                 <td className="align-middle">{review.date}</td>
