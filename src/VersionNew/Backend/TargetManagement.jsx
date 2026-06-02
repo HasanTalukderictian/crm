@@ -22,11 +22,12 @@ const TargetManagement = () => {
     const [filterUser, setFilterUser] = useState("");
     const [selectedUserId, setSelectedUserId] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const usersPerPage = 5           ;
+    const usersPerPage = 5;
 
     const userRole = localStorage.getItem("userRole");
     const userId = Number(localStorage.getItem("userId"));
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
 
     // ================= FETCH FUNCTIONS =================
     const fetchUsers = useCallback(async () => {
@@ -99,8 +100,48 @@ const TargetManagement = () => {
     const currentUsers = filteredUsersList.slice(indexOfFirstUser, indexOfLastUser);
     const totalPages = Math.ceil(filteredUsersList.length / usersPerPage);
 
+    // FIXED: Get user target with current month priority for admin
     const getUserTarget = (uid) => {
-        return targets.find(t => t.user_id === uid);
+        let userTargets = targets.filter(t => t.user_id === uid);
+        
+        // If no filters applied, show only current month's target
+        if (!filterYear && !filterMonth) {
+            const currentMonthTarget = userTargets.find(t => t.year === currentYear && t.month === currentMonth);
+            return currentMonthTarget || null;
+        }
+        
+        // If filters applied, show filtered target
+        let filtered = userTargets;
+        if (filterYear) {
+            filtered = filtered.filter(t => t.year === parseInt(filterYear));
+        }
+        if (filterMonth) {
+            filtered = filtered.filter(t => t.month === parseInt(filterMonth));
+        }
+        return filtered.length > 0 ? filtered[0] : null;
+    };
+
+    // Get all targets for a user (for table display)
+    const getAllUserTargets = (uid) => {
+        let userTargets = targets.filter(t => t.user_id === uid);
+        
+        // If filters are applied, show filtered results
+        if (filterYear || filterMonth) {
+            if (filterYear) {
+                userTargets = userTargets.filter(t => t.year === parseInt(filterYear));
+            }
+            if (filterMonth) {
+                userTargets = userTargets.filter(t => t.month === parseInt(filterMonth));
+            }
+            return userTargets.sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                return b.month - a.month;
+            });
+        }
+        
+        // No filters - show ONLY current month's record
+        const currentMonthTarget = userTargets.find(t => t.year === currentYear && t.month === currentMonth);
+        return currentMonthTarget ? [currentMonthTarget] : [];
     };
 
     const getMonthName = (monthNum) => {
@@ -163,7 +204,7 @@ const TargetManagement = () => {
                 return;
             }
 
-            const userTarget = getUserTarget(finalUserId);
+            const userTarget = targets.find(t => t.user_id === finalUserId && t.year === parseInt(year) && t.month === parseInt(month));
             const url = userTarget ? `${API_BASE}/targets/${userTarget.id}` : `${API_BASE}/set-target`;
 
             const response = await fetch(url, {
@@ -221,29 +262,24 @@ const TargetManagement = () => {
     };
 
     // ================= CHART PREP =================
-    const myTarget = targets.find(t => t.user_id === userId);
     let chartData = null;
-    if (myTarget && (Number(myTarget.achieved) > 0 || Number(myTarget.remaining) > 0)) {
-        chartData = {
-            labels: ["Achieved", "Remaining"],
-            datasets: [{
-                data: [Number(myTarget.achieved), Number(myTarget.remaining)],
-                backgroundColor: ["#28a745", "#dc3545"],
-                borderWidth: 1,
-            }],
-        };
+    if (userRole !== "admin") {
+        const userTargets = targets.filter(t => t.user_id === userId);
+        const myTarget = (!filterYear && !filterMonth) 
+            ? userTargets.find(t => t.year === currentYear && t.month === currentMonth)
+            : (userTargets.length > 0 ? userTargets[0] : null);
+        
+        if (myTarget && (Number(myTarget.achieved) > 0 || Number(myTarget.remaining) > 0)) {
+            chartData = {
+                labels: ["Achieved", "Remaining"],
+                datasets: [{
+                    data: [Number(myTarget.achieved), Number(myTarget.remaining)],
+                    backgroundColor: ["#28a745", "#dc3545"],
+                    borderWidth: 1,
+                }],
+            };
+        }
     }
-
-    // Modern card components for better UI
-    const StatCard = ({ title, value, color, icon }) => (
-        <div className="stat-card" style={{ background: `linear-gradient(135deg, ${color}20, ${color}08)`, borderLeft: `4px solid ${color}` }}>
-            <div className="stat-icon">{icon}</div>
-            <div className="stat-content">
-                <h6>{title}</h6>
-                <h3>{value}</h3>
-            </div>
-        </div>
-    );
 
     return (
         <div className="target-management-container">
@@ -265,6 +301,21 @@ const TargetManagement = () => {
                             <div className="header-left">
                                 <h3>Team Performance Overview</h3>
                                 <span className="badge-modern">{filteredUsersList.length} Active Members</span>
+                                {!filterYear && !filterMonth && (
+                                    <div className="current-month-badge-admin">
+                                        📍 Showing current month: {getMonthName(currentMonth)} {currentYear}
+                                    </div>
+                                )}
+                                {(filterYear || filterMonth) && (
+                                    <div className="filter-badge-admin">
+                                        🔍 Filtered results
+                                        <button className="clear-filters-btn-admin" onClick={() => {
+                                            setFilterYear("");
+                                            setFilterMonth("");
+                                            setFilterUser("");
+                                        }}>Clear Filters</button>
+                                    </div>
+                                )}
                             </div>
                             <button className="btn-primary-gradient" onClick={() => openModal(null)}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
@@ -299,6 +350,10 @@ const TargetManagement = () => {
                                     {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                             </div>
+                            <div className="filter-group">
+                                <label>&nbsp;</label>
+                            
+                            </div>
                         </div>
 
                         {/* Modern Table */}
@@ -317,42 +372,64 @@ const TargetManagement = () => {
                                 </thead>
                                 <tbody>
                                     {currentUsers.length > 0 ? currentUsers.map(user => {
-                                        const t = getUserTarget(user.id);
-                                        const progressStatus = t ? getProgressStatus(t.progress) : { label: "No Data", color: "#6c757d" };
-                                        return (
+                                        const userTargetsList = getAllUserTargets(user.id);
+                                        return userTargetsList.length > 0 ? (
+                                            userTargetsList.map((t, idx) => {
+                                                const progressStatus = getProgressStatus(t.progress);
+                                                const isCurrentMonth = (t.year === currentYear && t.month === currentMonth);
+                                                return (
+                                                    <tr key={`${user.id}-${t.year}-${t.month}`} className={isCurrentMonth && !filterYear && !filterMonth ? 'highlighted-row-admin' : ''}>
+                                                        {idx === 0 && (
+                                                            <>
+                                                                <td rowSpan={userTargetsList.length} className="user-cell">
+                                                                    <div className="user-avatar">{user.name.charAt(0)}</div>
+                                                                    <span className="user-name">{user.name}</span>
+                                                                </td>
+                                                            </>
+                                                        )}
+                                                        <td>
+                                                            <div className="period-badge">
+                                                                {getMonthName(t.month)} {t.year}
+                                                                {isCurrentMonth && !filterYear && !filterMonth && <span className="current-tag-admin"> (Current)</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="target-value">{t.target.toLocaleString()}</td>
+                                                        <td className="achieved-value">{t.achieved.toLocaleString()}</td>
+                                                        <td className="remaining-value">{t.remaining.toLocaleString()}</td>
+                                                        <td>
+                                                            <div className="progress-cell">
+                                                                <div className="progress-bar-container">
+                                                                    <div className="progress-fill" style={{ width: `${t.progress}%`, backgroundColor: progressStatus.color }}></div>
+                                                                </div>
+                                                                <span className="progress-percent" style={{ color: progressStatus.color }}>{t.progress}%</span>
+                                                            </div>
+                                                        </td>
+                                                        {idx === 0 && (
+                                                            <td rowSpan={userTargetsList.length}>
+                                                                <div className="action-buttons">
+                                                                    <button className="btn-icon edit" onClick={() => openModal(user)} title="Edit Target">
+                                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg>
+                                                                    </button>
+                                                                    <button className="btn-icon message" onClick={() => openMessageModal(user)} title="Send Message">
+                                                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+                                                );
+                                            })
+                                        ) : (
                                             <tr key={user.id}>
                                                 <td className="user-cell">
                                                     <div className="user-avatar">{user.name.charAt(0)}</div>
                                                     <span className="user-name">{user.name}</span>
                                                 </td>
-                                                <td>
-                                                    {t ? (
-                                                        <div className="period-badge">
-                                                            {getMonthName(t.month)} {t.year}
-                                                        </div>
-                                                    ) : <span className="text-muted">—</span>}
-                                                </td>
-                                                <td className="target-value">{t ? t.target.toLocaleString() : 0}</td>
-                                                <td className="achieved-value">{t ? t.achieved.toLocaleString() : 0}</td>
-                                                <td className="remaining-value">{t ? t.remaining.toLocaleString() : 0}</td>
-                                                <td>
-                                                    {t ? (
-                                                        <div className="progress-cell">
-                                                            <div className="progress-bar-container">
-                                                                <div className="progress-fill" style={{ width: `${t.progress}%`, backgroundColor: progressStatus.color }}></div>
-                                                            </div>
-                                                            <span className="progress-percent" style={{ color: progressStatus.color }}>{t.progress}%</span>
-                                                        </div>
-                                                    ) : <span className="text-muted">0%</span>}
-                                                </td>
-                                                <td>
-                                                    <div className="action-buttons">
-                                                        <button className="btn-icon edit" onClick={() => openModal(user)} title="Edit Target">
-                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg>
-                                                        </button>
-                                                        <button className="btn-icon message" onClick={() => openMessageModal(user)} title="Send Message">
-                                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                                        </button>
+                                                <td colSpan="6" className="empty-state">
+                                                    <div className="empty-message">
+                                                        {!filterYear && !filterMonth ? 
+                                                            `No target found for ${getMonthName(currentMonth)} ${currentYear}` : 
+                                                            "No target records found for selected filters"}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -376,42 +453,66 @@ const TargetManagement = () => {
                         )}
                     </>
                 ) : (
-                    /* User Dashboard */
+                    /* User Dashboard - Shows ONLY current month by default */
                     <div className="user-dashboard">
                         <div className="dashboard-header">
                             <h3>My Performance Dashboard</h3>
                             <p>Track your monthly targets and achievements</p>
+                            {!filterYear && !filterMonth && (
+                                <div className="current-month-indicator">
+                                    📍 Showing current month: {getMonthName(currentMonth)} {currentYear}
+                                </div>
+                            )}
+                            {(filterYear || filterMonth) && (
+                                <div className="filter-indicator">
+                                    🔍 Showing filtered results
+                                    <button className="clear-filters-btn" onClick={() => {
+                                        setFilterYear("");
+                                        setFilterMonth("");
+                                    }}>Clear Filters</button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Stats Cards */}
                         <div className="stats-grid">
-                            <div className="stat-card-primary">
-                                <div className="stat-icon">🎯</div>
-                                <div className="stat-info">
-                                    <span>Current Target</span>
-                                    <strong>{myTarget ? myTarget.target.toLocaleString() : 0}</strong>
-                                </div>
-                            </div>
-                            <div className="stat-card-success">
-                                <div className="stat-icon">✅</div>
-                                <div className="stat-info">
-                                    <span>Achieved</span>
-                                    <strong>{myTarget ? myTarget.achieved.toLocaleString() : 0}</strong>
-                                </div>
-                            </div>
-                            <div className="stat-card-warning">
-                                <div className="stat-icon">📊</div>
-                                <div className="stat-info">
-                                    <span>Progress</span>
-                                    <strong>{myTarget ? `${myTarget.progress}%` : "0%"}</strong>
-                                </div>
-                            </div>
+                            {(() => {
+                                const userTargets = targets.filter(t => t.user_id === userId);
+                                const myTarget = (!filterYear && !filterMonth) 
+                                    ? userTargets.find(t => t.year === currentYear && t.month === currentMonth)
+                                    : (userTargets.length > 0 ? userTargets[0] : null);
+                                return (
+                                    <>
+                                        <div className="stat-card-primary">
+                                            <div className="stat-icon">🎯</div>
+                                            <div className="stat-info">
+                                                <span>{!filterYear && !filterMonth ? 'Current Month Target' : 'Filtered Target'}</span>
+                                                <strong>{myTarget ? myTarget.target.toLocaleString() : 0}</strong>
+                                            </div>
+                                        </div>
+                                        <div className="stat-card-success">
+                                            <div className="stat-icon">✅</div>
+                                            <div className="stat-info">
+                                                <span>{!filterYear && !filterMonth ? 'Current Month Achieved' : 'Filtered Achieved'}</span>
+                                                <strong>{myTarget ? myTarget.achieved.toLocaleString() : 0}</strong>
+                                            </div>
+                                        </div>
+                                        <div className="stat-card-warning">
+                                            <div className="stat-icon">📊</div>
+                                            <div className="stat-info">
+                                                <span>{!filterYear && !filterMonth ? 'Current Month Progress' : 'Filtered Progress'}</span>
+                                                <strong>{myTarget ? `${myTarget.progress}%` : "0%"}</strong>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         {/* Filter Section for User */}
                         <div className="filter-container user-filters">
                             <div className="filter-group">
-                                <label>Year</label>
+                                <label>Year (Optional)</label>
                                 <select className="modern-select" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
                                     <option value="">All Years</option>
                                     <option value={currentYear}>{currentYear}</option>
@@ -419,11 +520,20 @@ const TargetManagement = () => {
                                 </select>
                             </div>
                             <div className="filter-group">
-                                <label>Month</label>
+                                <label>Month (Optional)</label>
                                 <select className="modern-select" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
                                     <option value="">All Months</option>
                                     {[...Array(12)].map((_, i) => <option key={i} value={i+1}>{getMonthName(i+1)}</option>)}
                                 </select>
+                            </div>
+                            <div className="filter-group">
+                                <label>&nbsp;</label>
+                                <button className="clear-filters-button" onClick={() => {
+                                    setFilterYear("");
+                                    setFilterMonth("");
+                                }}>
+                                    Clear Filters
+                                </button>
                             </div>
                         </div>
 
@@ -442,29 +552,64 @@ const TargetManagement = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {currentUsers.map(user => {
-                                            const t = getUserTarget(user.id);
-                                            const progressStatus = t ? getProgressStatus(t.progress) : { label: "No Data", color: "#6c757d" };
-                                            return (
-                                                <tr key={user.id}>
-                                                    <td><span className="month-badge">{t ? getMonthName(t.month) : "-"}</span></td>
-                                                    <td>{t ? t.year : "-"}</td>
-                                                    <td className="target-value">{t ? t.target.toLocaleString() : 0}</td>
-                                                    <td className="achieved-value">{t ? t.achieved.toLocaleString() : 0}</td>
-                                                    <td className="remaining-value">{t ? t.remaining.toLocaleString() : 0}</td>
-                                                    <td>
-                                                        {t ? (
-                                                            <div className="progress-cell">
-                                                                <div className="progress-bar-container">
-                                                                    <div className="progress-fill" style={{ width: `${t.progress}%`, backgroundColor: progressStatus.color }}></div>
+                                        {(() => {
+                                            let userTargets = targets.filter(t => t.user_id === userId);
+                                            
+                                            if (filterYear || filterMonth) {
+                                                if (filterYear) {
+                                                    userTargets = userTargets.filter(t => t.year === parseInt(filterYear));
+                                                }
+                                                if (filterMonth) {
+                                                    userTargets = userTargets.filter(t => t.month === parseInt(filterMonth));
+                                                }
+                                                userTargets = userTargets.sort((a, b) => {
+                                                    if (a.year !== b.year) return b.year - a.year;
+                                                    return b.month - a.month;
+                                                });
+                                            } else {
+                                                const currentMonthTarget = userTargets.find(t => t.year === currentYear && t.month === currentMonth);
+                                                userTargets = currentMonthTarget ? [currentMonthTarget] : [];
+                                            }
+                                            
+                                            return userTargets.length > 0 ? (
+                                                userTargets.map((t) => {
+                                                    const progressStatus = getProgressStatus(t.progress);
+                                                    const isCurrentMonth = (t.year === currentYear && t.month === currentMonth);
+                                                    return (
+                                                        <tr key={`${t.year}-${t.month}`} className={isCurrentMonth && !filterYear && !filterMonth ? 'highlighted-row' : ''}>
+                                                            <td>
+                                                                <span className="month-badge">
+                                                                    {getMonthName(t.month)}
+                                                                    {isCurrentMonth && !filterYear && !filterMonth && <span className="current-tag"> (Current)</span>}
+                                                                </span>
+                                                            </td>
+                                                            <td>{t.year}</td>
+                                                            <td className="target-value">{t.target.toLocaleString()}</td>
+                                                            <td className="achieved-value">{t.achieved.toLocaleString()}</td>
+                                                            <td className="remaining-value">{t.remaining.toLocaleString()}</td>
+                                                            <td>
+                                                                <div className="progress-cell">
+                                                                    <div className="progress-bar-container">
+                                                                        <div className="progress-fill" style={{ width: `${t.progress}%`, backgroundColor: progressStatus.color }}></div>
+                                                                    </div>
+                                                                    <span className="progress-percent" style={{ color: progressStatus.color }}>{t.progress}%</span>
                                                                 </div>
-                                                                <span className="progress-percent" style={{ color: progressStatus.color }}>{t.progress}%</span>
-                                                            </div>
-                                                        ) : <span className="text-muted">0%</span>}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan="6" className="empty-state">
+                                                        <div className="empty-message">
+                                                            {!filterYear && !filterMonth ? 
+                                                                `No target found for ${getMonthName(currentMonth)} ${currentYear}` : 
+                                                                "No target records found for selected filters"}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );
-                                        })}
+                                        })()}
                                     </tbody>
                                 </table>
                             </div>
@@ -473,35 +618,60 @@ const TargetManagement = () => {
                             <div className="chart-card">
                                 <div className="chart-header">
                                     <h5>Performance Overview</h5>
-                                    <span className="chart-badge">{myTarget ? `${myTarget.progress}% Complete` : "No Data"}</span>
+                                    <span className="chart-badge">
+                                        {(() => {
+                                            const userTargets = targets.filter(t => t.user_id === userId);
+                                            const myTarget = (!filterYear && !filterMonth) 
+                                                ? userTargets.find(t => t.year === currentYear && t.month === currentMonth)
+                                                : (userTargets.length > 0 ? userTargets[0] : null);
+                                            return myTarget ? 
+                                                `${myTarget.progress}% Complete ${!filterYear && !filterMonth ? '(Current Month)' : '(Filtered)'}` : 
+                                                "No Data";
+                                        })()}
+                                    </span>
                                 </div>
                                 <div className="chart-body">
-                                    {chartData ? (
-                                        <>
-                                            <div className="pie-chart-container">
-                                                <Pie data={chartData} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }} />
+                                    {(() => {
+                                        const userTargets = targets.filter(t => t.user_id === userId);
+                                        const myTarget = (!filterYear && !filterMonth) 
+                                            ? userTargets.find(t => t.year === currentYear && t.month === currentMonth)
+                                            : (userTargets.length > 0 ? userTargets[0] : null);
+                                        const chartDataLocal = myTarget && (Number(myTarget.achieved) > 0 || Number(myTarget.remaining) > 0) ? {
+                                            labels: ["Achieved", "Remaining"],
+                                            datasets: [{
+                                                data: [Number(myTarget.achieved), Number(myTarget.remaining)],
+                                                backgroundColor: ["#28a745", "#dc3545"],
+                                                borderWidth: 1,
+                                            }],
+                                        } : null;
+                                        
+                                        return chartDataLocal ? (
+                                            <>
+                                                <div className="pie-chart-container">
+                                                    <Pie data={chartDataLocal} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }} />
+                                                </div>
+                                                <div className="chart-stats">
+                                                    <div className="stat-item">
+                                                        <span className="stat-label">Total Target</span>
+                                                        <span className="stat-value">{myTarget.target.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="stat-item success">
+                                                        <span className="stat-label">Achieved</span>
+                                                        <span className="stat-value">{myTarget.achieved.toLocaleString()}</span>
+                                                    </div>
+                                                    <div className="stat-item danger">
+                                                        <span className="stat-label">Remaining</span>
+                                                        <span className="stat-value">{myTarget.remaining.toLocaleString()}</span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="no-chart-data">
+                                                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M12 6v6l4 2"/></svg>
+                                                <p>No performance data available for the selected period</p>
                                             </div>
-                                            <div className="chart-stats">
-                                                <div className="stat-item">
-                                                    <span className="stat-label">Total Target</span>
-                                                    <span className="stat-value">{myTarget.target.toLocaleString()}</span>
-                                                </div>
-                                                <div className="stat-item success">
-                                                    <span className="stat-label">Achieved</span>
-                                                    <span className="stat-value">{myTarget.achieved.toLocaleString()}</span>
-                                                </div>
-                                                <div className="stat-item danger">
-                                                    <span className="stat-label">Remaining</span>
-                                                    <span className="stat-value">{myTarget.remaining.toLocaleString()}</span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="no-chart-data">
-                                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M12 6v6l4 2"/></svg>
-                                            <p>No performance data available for the selected period</p>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
                                 </div>
                             </div>
                         </div>
@@ -583,14 +753,68 @@ const TargetManagement = () => {
             )}
 
             <style jsx>{`
-                /* Global Styles */
+                /* All existing styles remain the same, add these new admin-specific styles */
+                .current-month-badge-admin, .filter-badge-admin {
+                    background: #eef2ff;
+                    padding: 6px 12px;
+                    border-radius: 12px;
+                    font-size: 0.75rem;
+                    color: #4f46e5;
+                    margin-left: 15px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .clear-filters-btn-admin {
+                    background: #4f46e5;
+                    color: white;
+                    border: none;
+                    padding: 4px 10px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 0.7rem;
+                }
+
+                .clear-filters-btn-admin:hover {
+                    background: #4338ca;
+                }
+
+                .clear-filters-button-admin {
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    font-weight: 500;
+                    width: 100%;
+                    margin-top: 20px;
+                }
+
+                .clear-filters-button-admin:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+                }
+
+                .highlighted-row-admin {
+                    background: linear-gradient(90deg, #667eea08, #764ba208);
+                }
+
+                .current-tag-admin {
+                    font-size: 0.65rem;
+                    color: #667eea;
+                    font-weight: 500;
+                    margin-left: 4px;
+                }
+
+                /* Existing styles remain unchanged */
                 .target-management-container {
                     min-height: 100vh;
                     background: linear-gradient(135deg, #f5f7fa 0%, #e9edf2 100%);
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 }
 
-                /* Hero Section */
                 .hero-section {
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     padding: 20px 0;
@@ -611,7 +835,6 @@ const TargetManagement = () => {
                     opacity: 0.95;
                 }
 
-                /* Admin Header */
                 .admin-header {
                     display: flex;
                     justify-content: space-between;
@@ -656,7 +879,6 @@ const TargetManagement = () => {
                     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
                 }
 
-                /* Filter Container */
                 .filter-container {
                     background: white;
                     padding: 20px;
@@ -699,7 +921,6 @@ const TargetManagement = () => {
                     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
                 }
 
-                /* Modern Table */
                 .table-container {
                     background: white;
                     border-radius: 20px;
@@ -830,7 +1051,6 @@ const TargetManagement = () => {
                     color: #10b981;
                 }
 
-                /* Pagination */
                 .pagination-modern {
                     display: flex;
                     justify-content: center;
@@ -857,7 +1077,6 @@ const TargetManagement = () => {
                     background: #f1f5f9;
                 }
 
-                /* User Dashboard Styles */
                 .user-dashboard {
                     background: white;
                     border-radius: 24px;
@@ -874,6 +1093,49 @@ const TargetManagement = () => {
                     font-weight: 700;
                     color: #1e293b;
                     margin: 0 0 5px 0;
+                }
+
+                .current-month-indicator, .filter-indicator {
+                    background: #eef2ff;
+                    padding: 8px 16px;
+                    border-radius: 12px;
+                    font-size: 0.85rem;
+                    color: #4f46e5;
+                    margin-top: 10px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+
+                .clear-filters-btn {
+                    background: #4f46e5;
+                    color: white;
+                    border: none;
+                    padding: 4px 12px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-size: 0.75rem;
+                }
+
+                .clear-filters-btn:hover {
+                    background: #4338ca;
+                }
+
+                .clear-filters-button {
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    font-weight: 500;
+                    width: 100%;
+                    margin-top: 20px;
+                }
+
+                .clear-filters-button:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
                 }
 
                 .stats-grid {
@@ -989,7 +1251,23 @@ const TargetManagement = () => {
                 .stat-item.success .stat-value { color: #10b981; }
                 .stat-item.danger .stat-value { color: #ef4444; }
 
-                /* Modal Styles */
+                .highlighted-row {
+                    background: linear-gradient(90deg, #667eea08, #764ba208);
+                    border-left: 3px solid #667eea;
+                }
+
+                .current-tag {
+                    font-size: 0.7rem;
+                    color: #667eea;
+                    font-weight: 500;
+                }
+
+                .month-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+
                 .modal-overlay {
                     position: fixed;
                     top: 0;

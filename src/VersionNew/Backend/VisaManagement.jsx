@@ -49,8 +49,10 @@ const VisaManagement = () => {
     const itemsPerPage = 15;
 
     const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    const currentMonthName = new Date().toLocaleString("default", { month: "long" });
+    
     const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
-
     const months = [
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
@@ -485,6 +487,7 @@ const VisaManagement = () => {
         }
     };
 
+    // FIXED: Filter logic - Show current month by default, show old data only when filters are applied
     const filteredReviews = reviews
         .filter((review) => {
             if (userRole === "admin") return true;
@@ -498,10 +501,22 @@ const VisaManagement = () => {
                 review.phone?.toLowerCase().includes(query) ||
                 review.team?.name?.toLowerCase().includes(query) ||
                 review.passport?.toLowerCase().includes(query);
+            
             const reviewDate = review.date ? new Date(review.date) : null;
-            const matchesMonth = !selectedMonth || (reviewDate && reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
-            const matchesYear = !selectedYear || (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
-            return matchesSearch && matchesMonth && matchesYear;
+            
+            // If filters are applied, show filtered results
+            if (selectedYear || selectedMonth) {
+                const matchesMonth = !selectedMonth || (reviewDate && reviewDate.toLocaleString("default", { month: "long" }) === selectedMonth);
+                const matchesYear = !selectedYear || (reviewDate && reviewDate.getFullYear().toString() === selectedYear);
+                return matchesSearch && matchesMonth && matchesYear;
+            }
+            
+            // No filters - show ONLY current month's data
+            const isCurrentMonth = reviewDate && 
+                reviewDate.getFullYear() === currentYear && 
+                reviewDate.toLocaleString("default", { month: "long" }) === currentMonthName;
+            
+            return matchesSearch && isCurrentMonth;
         });
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -520,10 +535,34 @@ const VisaManagement = () => {
                             <div className="card shadow-sm border-0">
                                 <div className="card-body">
                                     <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                        <h3 className="mb-0" style={{ color: '#2c3e50' }}>
-                                            <i className="bi bi-passport me-2"></i>
-                                            Visa Management
-                                        </h3>
+                                        <div>
+                                            <h3 className="mb-0" style={{ color: '#2c3e50' }}>
+                                                <i className="bi bi-passport me-2"></i>
+                                                Visa Management
+                                            </h3>
+                                            {!selectedYear && !selectedMonth && (
+                                                <small className="text-muted mt-1 d-block">
+                                                    <i className="bi bi-calendar-check me-1"></i>
+                                                    Showing current month: {currentMonthName} {currentYear}
+                                                </small>
+                                            )}
+                                            {(selectedYear || selectedMonth) && (
+                                                <small className="text-muted mt-1 d-block">
+                                                    <i className="bi bi-funnel me-1"></i>
+                                                    Showing filtered results
+                                                    <button 
+                                                        className="btn btn-link btn-sm p-0 ms-2" 
+                                                        onClick={() => {
+                                                            setSelectedYear("");
+                                                            setSelectedMonth("");
+                                                        }}
+                                                        style={{ textDecoration: 'none' }}
+                                                    >
+                                                        <i className="bi bi-x-circle"></i> Clear Filters
+                                                    </button>
+                                                </small>
+                                            )}
+                                        </div>
                                         <div className="d-flex gap-2 flex-wrap">
                                             <select
                                                 className="form-select form-select-sm"
@@ -590,7 +629,7 @@ const VisaManagement = () => {
                                                         <th className="py-3">Member</th>
                                                         <th className="py-3">Country</th>
                                                         <th className="py-3">Sales Person</th>
-                                                         <th className="py-3">Process Person</th>
+                                                        <th className="py-3">Process Person</th>
                                                         <th className="py-3">Date</th>
                                                         <th className="py-3">Photo</th>
                                                         <th className="py-3">Status</th>
@@ -606,9 +645,9 @@ const VisaManagement = () => {
                                                                 <td className="align-middle">{review.passport}</td>
                                                                 <td className="align-middle">{review.invoice}</td>
                                                                 <td className="align-middle">{review.member}</td>
-                                                                     <td className="align-middle">{review.user?.name}</td>
                                                                 <td className="align-middle">{getCountries(review)}</td>
                                                                 <td className="align-middle">{review.team?.name}</td>
+                                                                <td className="align-middle">{review.user?.name}</td>
                                                                 <td className="align-middle">{review.date}</td>
                                                                 <td className="align-middle">
                                                                     {review.image && (
@@ -648,9 +687,13 @@ const VisaManagement = () => {
                                                         ))
                                                     ) : (
                                                         <tr>
-                                                            <td colSpan="11" className="text-center py-5">
+                                                            <td colSpan="12" className="text-center py-5">
                                                                 <i className="bi bi-inbox display-1 text-muted"></i>
-                                                                <p className="mt-2">No reviews found</p>
+                                                                <p className="mt-2">
+                                                                    {!selectedYear && !selectedMonth ? 
+                                                                        `No visa applications found for ${currentMonthName} ${currentYear}` : 
+                                                                        "No visa applications found for selected filters"}
+                                                                </p>
                                                             </td>
                                                         </tr>
                                                     )}
@@ -758,34 +801,6 @@ const VisaManagement = () => {
                                         <label className="form-label fw-bold">Customer Phone <span className="text-danger">*</span></label>
                                         <input type="tel" className="form-control" placeholder="11 digit phone number" value={phone} onChange={(e) => { if (e.target.value.length <= 11) setPhone(e.target.value) }} />
                                     </div>
-
-                                    {/* <div className="col-md-6 mb-3">
-                                        <label className="form-label fw-bold">
-                                            Customer Phone <span className="text-danger">*</span>
-                                        </label>
-
-                                        <input
-                                            type="tel"
-                                            className="form-control"
-                                            placeholder="01XXXXXXXXX"
-                                            value={phone}
-                                            onChange={(e) => {
-                                                let value = e.target.value.replace(/\D/g, '');
-
-                                                // প্রথম digit সবসময় 0 হবে
-                                                if (value.length === 1 && value !== '0') {
-                                                    value = '0' + value;
-                                                }
-
-                                                // সর্বোচ্চ 11 digit
-                                                if (value.length <= 11) {
-                                                    setPhone(value);
-                                                }
-                                            }}
-                                        />
-                                    </div> */}
-
-
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Passport Number <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" placeholder="6-10 characters" value={passport} onChange={(e) => { if (e.target.value.length <= 10) setPassport(e.target.value) }} />
@@ -799,7 +814,7 @@ const VisaManagement = () => {
                                         <select
                                             className="form-select"
                                             multiple
-                                            style={{ height: '150px' }} // এখানে আপনার প্রয়োজনমতো height দিতে পারেন
+                                            style={{ height: '150px' }}
                                             value={country}
                                             onChange={(e) => {
                                                 const selected = Array.from(e.target.selectedOptions, option => option.value);
