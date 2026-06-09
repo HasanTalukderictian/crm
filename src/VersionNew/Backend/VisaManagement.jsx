@@ -534,6 +534,12 @@ const VisaManagement = () => {
             return;
         }
 
+        // ✅ ADD CUSTOMER IMAGE VALIDATION HERE
+        if (!editId && !files.image) {
+            toast.error("Customer Image is required");
+            return;
+        }
+
         // ✅ ADD NOTARY VALIDATION HERE
         if (!notaryStatus) {
             toast.error("Please select Notary Status");
@@ -763,7 +769,7 @@ const VisaManagement = () => {
                                                         <th className="py-3">SL</th>
                                                         <th className="py-3">Customer Name</th>
                                                         <th className="py-3">Phone</th>
-                                                        <th className="py-3">Passport</th>
+
                                                         <th className="py-3">Invoice</th>
                                                         <th className="py-3">Member</th>
                                                         <th className="py-3">Country</th>
@@ -771,6 +777,7 @@ const VisaManagement = () => {
                                                         <th className="py-3">Process Person</th>
                                                         <th className="py-3">Date</th>
                                                         <th className="py-3">Status</th>
+                                                        <th className="py-3">Customer Pic</th>
                                                         <th className="py-3">Notary Status</th>
                                                         <th className="py-3">Action</th>
                                                     </tr>
@@ -782,7 +789,7 @@ const VisaManagement = () => {
                                                                 <td className="align-middle">{indexOfFirstItem + idx + 1}</td>
                                                                 <td className="align-middle">{review.name}</td>
                                                                 <td className="align-middle">{review.phone}</td>
-                                                                <td className="align-middle">{review.passport}</td>
+
                                                                 <td className="align-middle">{review.invoice}</td>
                                                                 <td className="align-middle">{review.member}</td>
                                                                 <td className="align-middle">{getCountries(review)}</td>
@@ -793,6 +800,46 @@ const VisaManagement = () => {
                                                                     <span className={`badge ${review.status === 'Pending' ? 'bg-warning' : review.status === 'Processing' ? 'bg-info' : review.status === 'Complete' ? 'bg-success' : 'bg-danger'}`}>
                                                                         {review.status}
                                                                     </span>
+                                                                </td>
+                                                                <td className="align-middle">
+                                                                    {review.image ? (
+                                                                        <img
+                                                                            src={review.image}
+                                                                            alt="Customer"
+                                                                            style={{
+                                                                                width: "40px",
+                                                                                height: "40px",
+                                                                                objectFit: "cover",
+                                                                                borderRadius: "50%",
+                                                                                cursor: "pointer",
+                                                                                border: "2px solid #ddd"
+                                                                            }}
+                                                                            onClick={() => {
+                                                                                // Optional: Open image in full size modal
+                                                                                window.open(review.image, '_blank');
+                                                                            }}
+                                                                            onError={(e) => {
+                                                                                e.target.onerror = null;
+                                                                                e.target.src = "https://via.placeholder.com/40?text=No+Image";
+                                                                            }}
+                                                                        />
+                                                                    ) : (
+                                                                        <div
+                                                                            style={{
+                                                                                width: "40px",
+                                                                                height: "40px",
+                                                                                borderRadius: "50%",
+                                                                                backgroundColor: "#e9ecef",
+                                                                                display: "flex",
+                                                                                alignItems: "center",
+                                                                                justifyContent: "center",
+                                                                                fontSize: "12px",
+                                                                                color: "#6c757d"
+                                                                            }}
+                                                                        >
+                                                                            <i className="bi bi-person"></i>
+                                                                        </div>
+                                                                    )}
                                                                 </td>
                                                                 <td className="align-middle">
                                                                     {review.notary_status ? (
@@ -1243,8 +1290,25 @@ const VisaManagement = () => {
                                         </h5>
                                     </div>
                                     <div className="col-md-6 mb-3">
-                                        <label className="form-label fw-bold">Customer Image</label>
-                                        <input type="file" className="form-control" accept="image/*" onChange={(e) => handleFileChange("image", e.target.files[0])} />
+                                        <label className="form-label fw-bold">
+                                            Customer Image <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="file"
+                                            className={`form-control ${!editId && !files.image && showModal ? 'is-invalid' : ''}`}
+                                            accept="image/*"
+                                            onChange={(e) => handleFileChange("image", e.target.files[0])}
+                                        />
+                                        {!editId && !files.image && (
+                                            <div className="invalid-feedback">
+                                                Customer Image is required
+                                            </div>
+                                        )}
+                                        {files.image && (
+                                            <small className="text-success">
+                                                <i className="bi bi-check-circle"></i> Image selected
+                                            </small>
+                                        )}
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Bank Certificate</label>
