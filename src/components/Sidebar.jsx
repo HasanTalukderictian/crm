@@ -46,6 +46,7 @@ const Sidebar = () => {
     { to: "/admin-depart", icon: "bi-diagram-3", label: "Department", roles: ["admin", "user"] },
     { to: "/admin-settings", icon: "bi-globe", label: "Country Settings", roles: ["admin", "user"] },
     { to: "/admin-target", icon: "bi-bullseye", label: "Target", roles: ["admin", "user"] },
+    { to: "/admin-slip", icon: "bi-bullseye", label: "Slip", roles: ["admin", "user"] },
   ];
 
   return (

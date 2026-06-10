@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
   FaHome, FaUsers, 
-  FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie
+  FaThLarge, FaPassport, FaBuilding, FaGlobe, FaBullseye, FaUserTie,
+  FaFileAlt  // 👈 Add this for Slip icon
 } from 'react-icons/fa';
 
 const Menu = ({ isOpen, darkMode }) => {
@@ -160,6 +161,12 @@ const Menu = ({ isOpen, darkMode }) => {
         <Link to="/admin/v1/target" style={navItemStyle('/admin/v1/target')} className="nav-hover-effect">
           <FaBullseye size={20} className="min-w-icon" />
           {isOpen && <span className="ms-3 fw-medium">Target Setting</span>}
+        </Link>
+
+        {/* 🔥 SLIP SETTING - WITH DIFFERENT ICON */}
+        <Link to="/admin/v1/slip" style={navItemStyle('/admin/v1/slip')} className="nav-hover-effect">
+          <FaFileAlt size={20} className="min-w-icon" />  {/* 👈 Different icon for Slip */}
+          {isOpen && <span className="ms-3 fw-medium">Slip Setting</span>}
         </Link>
 
       </div>
