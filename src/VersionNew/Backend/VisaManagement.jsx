@@ -20,6 +20,7 @@ const VisaManagement = () => {
     const userId = Number(localStorage.getItem("userId"));
 
     const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [passport, setPassport] = useState("");
     const [invoice, setInvoice] = useState("");
@@ -89,6 +90,13 @@ const VisaManagement = () => {
         blankOfficePad: null,
         renewalTradeLicense: null,
         memorandumLimited: null,
+        // নতুন ফাইল ফিল্ড
+        bmdcCertificate: null,
+        retirementCertificate: null,
+        barCouncilCertificate: null,
+        retirementCertificateLawyer: null,
+        studentId: null,
+        recommendationLetter: null,
     });
 
     const [fileChecks, setFileChecks] = useState({
@@ -109,6 +117,13 @@ const VisaManagement = () => {
         memorandumLimited: false,
         fatherNid: false,
         motherNid: false,
+        // নতুন চেকবক্স ফিল্ড
+        bmdcCertificate: false,
+        retirementCertificate: false,
+        barCouncilCertificate: false,
+        retirementCertificateLawyer: false,
+        studentId: false,
+        recommendationLetter: false,
     });
 
     const [preview, setPreview] = useState(null);
@@ -383,6 +398,7 @@ const VisaManagement = () => {
             setEditId(data.id);
             setName(data.name || "");
             setPhone(data.phone || "");
+            setEmail(data.email || "");
             setPassport(data.passport || "");
             setInvoice(data.invoice || "");
             let parsedCountry = [];
@@ -487,6 +503,7 @@ const VisaManagement = () => {
         setPassport("");
         setInvoice("");
         setCountry([]);
+        setEmail("");
         setSalesPerson("");
         setNotaryStatus("");
         setApplicantType("");
@@ -508,6 +525,8 @@ const VisaManagement = () => {
             officeId: null, salarySlips: null, governmentOrder: null, visitingCard: null,
             companyBankStatement: null, blankOfficePad: null, renewalTradeLicense: null,
             memorandumLimited: null,
+            bmdcCertificate: null, retirementCertificate: null, barCouncilCertificate: null,
+            retirementCertificateLawyer: null, studentId: null, recommendationLetter: null,
         });
         setFileChecks({
             bankCertificate: false, nidFile: false, assetValuation: false, birthCertificate: false,
@@ -515,6 +534,8 @@ const VisaManagement = () => {
             governmentOrder: false, visitingCard: false, salaryAmount: false, companyBankStatement: false,
             blankOfficePad: false, renewalTradeLicense: false, memorandumLimited: false,
             fatherNid: false, motherNid: false,
+            bmdcCertificate: false, retirementCertificate: false, barCouncilCertificate: false,
+            retirementCertificateLawyer: false, studentId: false, recommendationLetter: false,
         });
         setPreview(null);
     };
@@ -522,6 +543,15 @@ const VisaManagement = () => {
     const submitReview = async () => {
         if (phone.length !== 11) {
             toast.error("Phone number must be exactly 11 digits");
+            return;
+        }
+        if (!email) {
+            toast.error("Email address is required");
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            toast.error("Please enter a valid email address");
             return;
         }
         if (passport.length < 6 || passport.length > 10) {
@@ -549,6 +579,7 @@ const VisaManagement = () => {
         const formData = new FormData();
         formData.append("name", name);
         formData.append("phone", phone);
+        formData.append("email", email);
         formData.append("passport", passport);
         formData.append("invoice", invoice);
         country.forEach((c, index) => {
@@ -769,7 +800,7 @@ const VisaManagement = () => {
                                                         <th className="py-3">SL</th>
                                                         <th className="py-3">Customer Name</th>
                                                         <th className="py-3">Phone</th>
-
+                                                        <th className="py-3">Email</th>
                                                         <th className="py-3">Invoice</th>
                                                         <th className="py-3">Member</th>
                                                         <th className="py-3">Country</th>
@@ -789,7 +820,7 @@ const VisaManagement = () => {
                                                                 <td className="align-middle">{indexOfFirstItem + idx + 1}</td>
                                                                 <td className="align-middle">{review.name}</td>
                                                                 <td className="align-middle">{review.phone}</td>
-
+                                                                <td className="align-middle">{review.email || "N/A"}</td>  {/* Add this */}
                                                                 <td className="align-middle">{review.invoice}</td>
                                                                 <td className="align-middle">{review.member}</td>
                                                                 <td className="align-middle">{getCountries(review)}</td>
@@ -1158,6 +1189,19 @@ const VisaManagement = () => {
                                         <input type="tel" className="form-control" placeholder="11 digit phone number" value={phone} onChange={(e) => { if (e.target.value.length <= 11) setPhone(e.target.value) }} />
                                     </div>
                                     <div className="col-md-6 mb-3">
+                                        <label className="form-label fw-bold">Email Address <span className="text-danger">*</span></label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            placeholder="example@email.com"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                        {email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                                            <small className="text-danger">Please enter a valid email address</small>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Passport Number <span className="text-danger">*</span></label>
                                         <input type="text" className="form-control" placeholder="6-10 characters" value={passport} onChange={(e) => { if (e.target.value.length <= 10) setPassport(e.target.value) }} />
                                     </div>
@@ -1236,6 +1280,9 @@ const VisaManagement = () => {
                                             </button>
                                         </div>
                                     </div>
+
+                                  // Applicant Type section replace this part in the modal
+
                                     <div className="col-12 mb-3">
                                         <label className="form-label fw-bold me-3">Applicant Type:</label>
                                         <div className="form-check form-check-inline">
@@ -1247,9 +1294,104 @@ const VisaManagement = () => {
                                             <label className="form-check-label">Business Owner</label>
                                         </div>
                                         <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio" name="applicantType" value="doctor" checked={applicantType === "doctor"} onChange={(e) => setApplicantType(e.target.value)} />
+                                            <label className="form-check-label">Doctor</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio" name="applicantType" value="lawyer" checked={applicantType === "lawyer"} onChange={(e) => setApplicantType(e.target.value)} />
+                                            <label className="form-check-label">Lawyer</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio" name="applicantType" value="student" checked={applicantType === "student"} onChange={(e) => setApplicantType(e.target.value)} />
+                                            <label className="form-check-label">Student</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
                                             <input className="form-check-input" type="radio" name="applicantType" value="others" checked={applicantType === "others"} onChange={(e) => setApplicantType(e.target.value)} />
                                             <label className="form-check-label">Others</label>
                                         </div>
+
+                                        {/* Doctor Section */}
+                                        {applicantType === "doctor" && (
+                                            <div className="row mt-3">
+                                                <div className="col-12">
+                                                    <h5 className="text-primary border-bottom pb-2 mb-3">
+                                                        <i className="bi bi-heart-pulse me-2"></i>Doctor Documents
+                                                    </h5>
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">BMDC Certificate <span className="text-danger">*</span></label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.bmdcCertificate} onChange={() => handleCheckChange("bmdcCertificate")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("bmdcCertificate", e.target.files[0])} />
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">Retirement Certificate</label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.retirementCertificate} onChange={() => handleCheckChange("retirementCertificate")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("retirementCertificate", e.target.files[0])} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Lawyer Section */}
+                                        {applicantType === "lawyer" && (
+                                            <div className="row mt-3">
+                                                <div className="col-12">
+                                                    <h5 className="text-primary border-bottom pb-2 mb-3">
+                                                        <i className="bi bi-gavel me-2"></i>Lawyer Documents
+                                                    </h5>
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">Bar Council Certificate <span className="text-danger">*</span></label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.barCouncilCertificate} onChange={() => handleCheckChange("barCouncilCertificate")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("barCouncilCertificate", e.target.files[0])} />
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">Retirement Certificate</label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.retirementCertificateLawyer} onChange={() => handleCheckChange("retirementCertificateLawyer")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("retirementCertificateLawyer", e.target.files[0])} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Student Section */}
+                                        {applicantType === "student" && (
+                                            <div className="row mt-3">
+                                                <div className="col-12">
+                                                    <h5 className="text-primary border-bottom pb-2 mb-3">
+                                                        <i className="bi bi-book me-2"></i>Student Documents
+                                                    </h5>
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">Student ID <span className="text-danger">*</span></label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.studentId} onChange={() => handleCheckChange("studentId")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("studentId", e.target.files[0])} />
+                                                </div>
+                                                <div className="col-md-6 mb-3">
+                                                    <label className="form-label fw-bold">Recommendation Letter / Leave Letter</label>
+                                                    <div className="mb-1">
+                                                        <input type="checkbox" checked={fileChecks.recommendationLetter} onChange={() => handleCheckChange("recommendationLetter")} />
+                                                        <small className="ms-2">Include in SMS</small>
+                                                    </div>
+                                                    <input type="file" className="form-control" onChange={(e) => handleFileChange("recommendationLetter", e.target.files[0])} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Others Section */}
                                         {applicantType === "others" && (
                                             <div className="row mt-3">
                                                 <div className="col-md-6 mb-3">
@@ -1263,6 +1405,7 @@ const VisaManagement = () => {
                                             </div>
                                         )}
                                     </div>
+
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Status</label>
                                         <select className="form-select" value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -1499,6 +1642,10 @@ const VisaManagement = () => {
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Phone</label>
                                         <input className="form-control bg-light" value={viewData.phone} readOnly />
+                                    </div>
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label fw-bold">Email</label>
+                                        <input className="form-control bg-light" value={viewData.email || "N/A"} readOnly />
                                     </div>
                                     <div className="col-md-6 mb-3">
                                         <label className="form-label fw-bold">Passport</label>

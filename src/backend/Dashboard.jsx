@@ -234,20 +234,28 @@ const Dashboard = () => {
 
     const [topSales, setTopSales] = useState([]);
 
-    const fetchTopSales = async () => {
-        const token = localStorage.getItem("authToken");
-        try {
-            const res = await fetch(`${API_BASE}/get-topsales`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const json = await res.json();
-            if (json.status) {
-                setTopSales(json.data);
-            }
-        } catch (error) {
-            console.error("Error fetching top sales:", error);
+   const fetchTopSales = async () => {
+    const token = localStorage.getItem("authToken");
+    try {
+        const res = await fetch(`${API_BASE}/get-topsales`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const json = await res.json();
+        
+        // Debug: Console লগ করে দেখুন কি আসছে
+        console.log("API Response:", json);
+        
+        if (json.status) {
+            setTopSales(json.data);
+            // Debug: দেখুন ডাটা সেট হচ্ছে কিনা
+            console.log("Top Sales Data:", json.data);
+        } else {
+            console.error("API returned status false");
         }
-    };
+    } catch (error) {
+        console.error("Error fetching top sales:", error);
+    }
+};
 
 
     useEffect(() => {
@@ -604,55 +612,36 @@ const Dashboard = () => {
 
                 </div>
 
-                <div className="card p-4 shadow-sm mt-4">
-                    {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h5 className="mb-0 fw-bold text-uppercase" style={{ letterSpacing: '1px' }}>
-                            Top 5 Visa Sales Performer 
-                        </h5>
-                        <div style={{
-                            backgroundColor: "#ffc107",
-                            padding: "8px 12px",
-                            borderRadius: "10px",
-                            color: "#000",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
-                        }}>
-                            <i className="bi bi-award-fill"></i>
+               <div className="row g-3">
+    {topSales && topSales.length > 0 ? (
+        topSales.slice(0, 5).map((item, index) => (
+            <div key={index} className="col-lg col-md-6 col-sm-12">
+                <div className="card border-0 h-100" style={{
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "12px",
+                    transition: "transform 0.2s",
+                    cursor: "pointer"
+                }}>
+                    <div className="card-body p-3 text-center">
+                        <div className="fs-2 mb-2">{getMedal(index)}</div>
+                        <h6 className="fw-bold mb-1 text-truncate" title={item.team?.name || item.team_name}>
+                            {item.team?.name || item.team_name || "N/A"}
+                        </h6>
+                        <div className="mt-2">
+                            <span className="badge rounded-pill bg-primary px-3 py-2">
+                                {item.total_visas || item.total_visa || 0} Visas
+                            </span>
                         </div>
                     </div>
-
-                    {/* Performers Row */}
-                    <div className="row g-3">
-                        {topSales.length > 0 ? (
-                            // .slice(0, 5) দিয়ে ৫ জন লিমিট করা হয়েছে
-                            topSales.slice(0, 5).map((item, index) => (
-                                <div key={index} className="col-lg col-md-6 col-sm-12">
-                                    <div className="card border-0 h-100" style={{
-                                        backgroundColor: "#f8f9fa",
-                                        borderRadius: "12px",
-                                        transition: "transform 0.2s"
-                                    }}>
-                                        <div className="card-body p-3 text-center">
-                                            <div className="fs-2 mb-2">{getMedal(index)}</div>
-                                            <h6 className="fw-bold mb-1 text-truncate" title={item.team?.name}>
-                                                {item.team?.name}
-                                            </h6>
-                                            <div className="mt-2">
-                                                <span className="badge rounded-pill bg-primary px-3 py-2">
-                                                    {item.total_visas} Visas
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="col-12 text-center py-4 text-muted">
-                                <i className="bi bi-info-circle me-2"></i> No sales data found
-                            </div>
-                        )}
-                    </div>
                 </div>
+            </div>
+        ))
+    ) : (
+        <div className="col-12 text-center py-4 text-muted">
+            <i className="bi bi-info-circle me-2"></i> No sales data found
+        </div>
+    )}
+</div>
 
                 <div className="card p-4 shadow-sm mt-4">
 
